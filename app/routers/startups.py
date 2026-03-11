@@ -11,9 +11,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.dependencies.startup import require_startup_access
+from app.models.agent import Agent
+from app.models.enums import MemberRole
 from app.models.startup import Startup
+from app.models.startup_member import StartupMember
 from app.models.user import User
 from app.schemas.startup import StartupCreate, StartupOut, StartupUpdate
+
+MANAGER_SLUG = "manager"
 
 router = APIRouter(prefix="/api/v1/startups", tags=["startups"])
 
@@ -50,6 +55,34 @@ async def create_startup(
         **data.model_dump(),
     )
     db.add(startup)
+    await db.flush()  # get startup.id before creating member rows
+
+    # Auto-assign founder as a team member
+    founder_member = StartupMember(
+        startup_id=startup.id,
+        user_id=current_user.id,
+        name=f"{current_user.first_name} {current_user.last_name}",
+        role=MemberRole.FOUNDER,
+        title="Founder",
+    )
+    db.add(founder_member)
+
+    # Auto-assign Manager agent to the team (if it exists in registry)
+    result = await db.execute(
+        select(Agent).where(Agent.slug == MANAGER_SLUG, Agent.is_active == True)
+    )
+    manager_agent = result.scalar_one_or_none()
+    if manager_agent:
+        manager_member = StartupMember(
+            startup_id=startup.id,
+            agent_id=manager_agent.id,
+            name=manager_agent.name,
+            role=MemberRole.EMPLOYEE,
+            title="Manager",
+            responsibilities=manager_agent.description,
+        )
+        db.add(manager_member)
+
     await db.commit()
     await db.refresh(startup)
     return StartupOut.model_validate(startup)
