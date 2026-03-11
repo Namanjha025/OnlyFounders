@@ -9,6 +9,11 @@ from app.models.financial import FinancialDetail
 from app.models.funding_round import FundingRound
 from app.models.equity import EquityShareholder
 from app.models.document import Document
+from app.models.member_document import MemberDocument
+from app.models.agent import Agent
+from app.models.task import Task
+from app.models.calendar_event import CalendarEvent
+from app.models.message import Message
 
 __all__ = [
     "Base",
@@ -22,4 +27,9 @@ __all__ = [
     "FundingRound",
     "EquityShareholder",
     "Document",
+    "MemberDocument",
+    "Agent",
+    "Task",
+    "CalendarEvent",
+    "Message",
 ]

@@ -106,3 +106,61 @@ class IncorporationType(str, enum.Enum):
     PBC = "pbc"
     LTD = "ltd"
     OTHER = "other"
+
+
+class AccessLevel(str, enum.Enum):
+    ADMIN = "admin"
+    EDITOR = "editor"
+    VIEWER = "viewer"
+
+
+class EmploymentType(str, enum.Enum):
+    FULL_TIME = "full_time"
+    PART_TIME = "part_time"
+    CONTRACT = "contract"
+    INTERN = "intern"
+
+
+class MemberDocCategory(str, enum.Enum):
+    OFFER_LETTER = "offer_letter"
+    CONTRACT = "contract"
+    NDA = "nda"
+    POLICY_ACKNOWLEDGEMENT = "policy_acknowledgement"
+    REVIEW = "review"
+    TAX_FORM = "tax_form"
+    OTHER = "other"
+
+
+class TaskStatus(str, enum.Enum):
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    BLOCKED = "blocked"
+    REVIEW = "review"
+    COMPLETED = "completed"
+
+
+class TaskPriority(str, enum.Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class CalendarEventType(str, enum.Enum):
+    TASK_DUE = "task_due"
+    MEETING = "meeting"
+    REMINDER = "reminder"
+    MILESTONE = "milestone"
+    DEADLINE = "deadline"
+
+
+class AgentType(str, enum.Enum):
+    PLATFORM = "platform"
+    MARKETPLACE = "marketplace"
+
+
+class MessageRole(str, enum.Enum):
+    USER = "user"
+    ASSISTANT = "assistant"
+    SYSTEM = "system"
+    TOOL = "tool"

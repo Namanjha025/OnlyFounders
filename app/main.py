@@ -2,16 +2,21 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import (
+    agents,
     auth,
+    calendar,
     documents,
     equity,
     financial,
     founder_profile,
     funding_rounds,
+    manager,
+    member_documents,
     onboarding,
     product,
     startup_members,
     startups,
+    tasks,
     traction,
 )
 
@@ -39,7 +44,14 @@ app.include_router(financial.router)
 app.include_router(funding_rounds.router)
 app.include_router(equity.router)
 app.include_router(documents.router)
+app.include_router(member_documents.router)
+app.include_router(tasks.router)
+app.include_router(calendar.router)
 app.include_router(onboarding.router)
+app.include_router(agents.registry_router)
+app.include_router(agents.team_router)
+app.include_router(agents.chat_router)
+app.include_router(manager.router)
 
 
 @app.get("/health")
