@@ -25,7 +25,7 @@ class FinancialDetail(Base, UUIDMixin, TimestampMixin):
     is_fundraising: Mapped[Optional[bool]] = mapped_column(Boolean)
     fundraise_target: Mapped[Optional[int]] = mapped_column(BigInteger)
     fundraise_round_type: Mapped[Optional[FundingRoundType]] = mapped_column(
-        ENUM(FundingRoundType, name="fundingroundtype", create_type=True)
+        ENUM(FundingRoundType, name="fundingroundtype", create_type=True, values_callable=lambda e: [x.value for x in e])
     )
     total_raised: Mapped[Optional[int]] = mapped_column(BigInteger)
 

@@ -21,7 +21,7 @@ class MemberDocument(Base, UUIDMixin, TimestampMixin):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     category: Mapped[MemberDocCategory] = mapped_column(
-        ENUM(MemberDocCategory, name="memberdoccategory", create_type=True), nullable=False
+        ENUM(MemberDocCategory, name="memberdoccategory", create_type=True, values_callable=lambda e: [x.value for x in e]), nullable=False
     )
     file_name: Mapped[Optional[str]] = mapped_column(String(255))
     file_size: Mapped[Optional[int]] = mapped_column(Integer)

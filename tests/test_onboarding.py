@@ -43,16 +43,16 @@ async def test_onboarding_initial_state(
 async def test_onboarding_team_section(
     client: AsyncClient, auth_user: Dict, test_startup: Dict
 ):
-    """Team completeness should be 50 with 1 founder member (auto-created)."""
+    """Team completeness should be >= 50 with at least the founder member (auto-created)."""
     resp = await client.get(
         f"/api/v1/startups/{test_startup['id']}/onboarding/",
         headers=auth_user["headers"],
     )
     data = resp.json()
     team = data["sections"]["team"]
-    # 1 member -> 50%
-    assert team["completeness"] == 50
-    assert team["complete"] is True  # threshold is >= 50
+    # At least 1 member (founder); manager agent may also be present
+    assert team["completeness"] >= 50
+    assert team["complete"] is True
 
 
 @pytest.mark.asyncio

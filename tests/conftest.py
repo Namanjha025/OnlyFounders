@@ -1,13 +1,16 @@
 """
 Shared fixtures for the OnlyFounders test suite.
 
-* Spins up an async test database (postgresql+asyncpg)
+* Runs Alembic migrations (sync psycopg2) to set up the test database schema
 * Overrides FastAPI's ``get_db`` dependency so every request uses the test session
 * Provides reusable fixtures: authenticated client, test user, test startup, test agent
 """
 from __future__ import annotations
 
 import asyncio
+import os
+import subprocess
+import sys
 import uuid
 from typing import AsyncGenerator, Dict
 
@@ -15,6 +18,7 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
 from app.database import get_db
 from app.main import app
@@ -23,11 +27,13 @@ from app.models import Base
 # ---------------------------------------------------------------------------
 # Database setup
 # ---------------------------------------------------------------------------
-TEST_DATABASE_URL = (
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/onlyfounders_test"
-)
+TEST_DB_NAME = "onlyfounders_test"
+TEST_DATABASE_URL = f"postgresql+asyncpg://namanjha@localhost:5432/{TEST_DB_NAME}"
 
-engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+# IMPORTANT: Use NullPool to avoid connection sharing issues in tests.
+# NullPool creates a new connection for each session instead of reusing
+# connections from a pool, which prevents "another operation is in progress".
+engine = create_async_engine(TEST_DATABASE_URL, echo=False, poolclass=NullPool)
 TestSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
@@ -44,37 +50,65 @@ def event_loop():
 
 
 # ---------------------------------------------------------------------------
-# Create / drop tables once per session
+# Schema setup via Alembic (uses sync psycopg2 — avoids asyncpg enum issues)
 # ---------------------------------------------------------------------------
+def _psql(sql: str) -> None:
+    subprocess.run(["psql", "-d", TEST_DB_NAME, "-c", sql], capture_output=True)
+
+
+def _clean_db() -> None:
+    """Drop all tables and enum types."""
+    _psql(
+        "DO $$ DECLARE r RECORD; "
+        "BEGIN "
+        "FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP "
+        "EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE'; "
+        "END LOOP; "
+        "FOR r IN (SELECT typname FROM pg_type WHERE typtype = 'e') LOOP "
+        "EXECUTE 'DROP TYPE IF EXISTS ' || quote_ident(r.typname) || ' CASCADE'; "
+        "END LOOP; "
+        "END $$;"
+    )
+
+
+def _alembic_upgrade() -> None:
+    env = os.environ.copy()
+    env["DATABASE_URL"] = f"postgresql+asyncpg://namanjha@localhost:5432/{TEST_DB_NAME}"
+    result = subprocess.run(
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"Alembic upgrade failed:\n{result.stderr}")
+
+
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_database(event_loop):
-    """Create all tables before tests run and drop them afterwards."""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    """Run Alembic migration to set up the test database."""
+    _clean_db()
+    _alembic_upgrade()
     yield
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    _clean_db()
 
 
 # ---------------------------------------------------------------------------
-# Per-test database session
-# ---------------------------------------------------------------------------
-@pytest_asyncio.fixture
-async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    """Provide a database session for each test."""
-    async with TestSessionLocal() as session:
-        yield session
-
-
-# ---------------------------------------------------------------------------
-# Dependency override
+# Dependency override — each endpoint call gets its own session
 # ---------------------------------------------------------------------------
 @pytest_asyncio.fixture(autouse=True)
-async def override_get_db(db_session: AsyncSession):
-    """Override the application ``get_db`` dependency with the test session."""
+async def override_get_db():
+    """Override ``get_db`` so every FastAPI dependency call gets a fresh session.
+
+    This mirrors production behaviour where ``get_db`` opens (and closes) its
+    own ``AsyncSession`` for each request.  Sharing a single session between
+    the ASGI transport and the test coroutine would cause
+    ``InterfaceError: another operation is in progress``.
+    """
 
     async def _override() -> AsyncGenerator[AsyncSession, None]:
-        yield db_session
+        async with TestSessionLocal() as session:
+            yield session
 
     app.dependency_overrides[get_db] = _override
     yield

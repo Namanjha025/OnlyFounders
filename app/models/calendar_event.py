@@ -20,7 +20,7 @@ class CalendarEvent(Base, UUIDMixin, TimestampMixin):
     title: Mapped[str] = mapped_column(String(300), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text)
     event_type: Mapped[CalendarEventType] = mapped_column(
-        ENUM(CalendarEventType, name="calendareventtype", create_type=True), nullable=False
+        ENUM(CalendarEventType, name="calendareventtype", create_type=True, values_callable=lambda e: [x.value for x in e]), nullable=False
     )
     event_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
     event_time: Mapped[Optional[datetime.time]] = mapped_column(Time)

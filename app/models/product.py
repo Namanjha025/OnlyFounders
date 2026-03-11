@@ -19,7 +19,7 @@ class ProductDetail(Base, UUIDMixin, TimestampMixin):
     problem: Mapped[Optional[str]] = mapped_column(Text)
     solution: Mapped[Optional[str]] = mapped_column(Text)
     product_stage: Mapped[Optional[ProductStage]] = mapped_column(
-        ENUM(ProductStage, name="productstage", create_type=True)
+        ENUM(ProductStage, name="productstage", create_type=True, values_callable=lambda e: [x.value for x in e])
     )
     why_now: Mapped[Optional[str]] = mapped_column(Text)
     unique_insight: Mapped[Optional[str]] = mapped_column(Text)

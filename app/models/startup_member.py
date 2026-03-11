@@ -32,16 +32,16 @@ class StartupMember(Base, UUIDMixin, TimestampMixin):
     name: Mapped[Optional[str]] = mapped_column(String(200))
     email: Mapped[Optional[str]] = mapped_column(String(255))
     role: Mapped[MemberRole] = mapped_column(
-        ENUM(MemberRole, name="memberrole", create_type=True), nullable=False
+        ENUM(MemberRole, name="memberrole", create_type=True, values_callable=lambda e: [x.value for x in e]), nullable=False
     )
     title: Mapped[Optional[str]] = mapped_column(String(100))
     department: Mapped[Optional[str]] = mapped_column(String(100))
     responsibilities: Mapped[Optional[str]] = mapped_column(Text)
     access_level: Mapped[Optional[AccessLevel]] = mapped_column(
-        ENUM(AccessLevel, name="accesslevel", create_type=True)
+        ENUM(AccessLevel, name="accesslevel", create_type=True, values_callable=lambda e: [x.value for x in e])
     )
     employment_type: Mapped[Optional[EmploymentType]] = mapped_column(
-        ENUM(EmploymentType, name="employmenttype", create_type=True)
+        ENUM(EmploymentType, name="employmenttype", create_type=True, values_callable=lambda e: [x.value for x in e])
     )
     start_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
     salary: Mapped[Optional[int]] = mapped_column(BigInteger)

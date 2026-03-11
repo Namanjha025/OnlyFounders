@@ -14,7 +14,7 @@ class User(Base, UUIDMixin, TimestampMixin):
     first_name: Mapped[str] = mapped_column(String(100), nullable=False)
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     role: Mapped[UserRole] = mapped_column(
-        ENUM(UserRole, name="userrole", create_type=True),
+        ENUM(UserRole, name="userrole", create_type=True, values_callable=lambda e: [x.value for x in e]),
         default=UserRole.FOUNDER,
         server_default=UserRole.FOUNDER.value,
     )

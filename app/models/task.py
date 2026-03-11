@@ -20,12 +20,12 @@ class Task(Base, UUIDMixin, TimestampMixin):
     title: Mapped[str] = mapped_column(String(300), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text)
     status: Mapped[TaskStatus] = mapped_column(
-        ENUM(TaskStatus, name="taskstatus", create_type=True),
+        ENUM(TaskStatus, name="taskstatus", create_type=True, values_callable=lambda e: [x.value for x in e]),
         nullable=False,
         server_default=TaskStatus.PENDING.value,
     )
     priority: Mapped[Optional[TaskPriority]] = mapped_column(
-        ENUM(TaskPriority, name="taskpriority", create_type=True)
+        ENUM(TaskPriority, name="taskpriority", create_type=True, values_callable=lambda e: [x.value for x in e])
     )
     assigned_to: Mapped[Optional[str]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("startup_members.id", ondelete="SET NULL"), index=True

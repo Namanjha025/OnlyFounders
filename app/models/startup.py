@@ -24,10 +24,10 @@ class Startup(Base, UUIDMixin, TimestampMixin):
     logo_url: Mapped[Optional[str]] = mapped_column(String(500))
     website_url: Mapped[Optional[str]] = mapped_column(String(500))
     stage: Mapped[Optional[StartupStage]] = mapped_column(
-        ENUM(StartupStage, name="startupstage", create_type=True)
+        ENUM(StartupStage, name="startupstage", create_type=True, values_callable=lambda e: [x.value for x in e])
     )
     industry: Mapped[Optional[Industry]] = mapped_column(
-        ENUM(Industry, name="industry", create_type=True)
+        ENUM(Industry, name="industry", create_type=True, values_callable=lambda e: [x.value for x in e])
     )
     founded_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
     hq_city: Mapped[Optional[str]] = mapped_column(String(100))

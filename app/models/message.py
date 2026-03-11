@@ -20,7 +20,7 @@ class Message(Base, UUIDMixin, TimestampMixin):
         UUID(as_uuid=True), ForeignKey("agents.id", ondelete="SET NULL"), index=True
     )
     role: Mapped[MessageRole] = mapped_column(
-        ENUM(MessageRole, name="messagerole", create_type=True), nullable=False
+        ENUM(MessageRole, name="messagerole", create_type=True, values_callable=lambda e: [x.value for x in e]), nullable=False
     )
     content: Mapped[Optional[str]] = mapped_column(Text)
     metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSONB)

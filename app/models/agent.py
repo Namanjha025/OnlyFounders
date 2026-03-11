@@ -17,7 +17,7 @@ class Agent(Base, UUIDMixin, TimestampMixin):
     slug: Mapped[str] = mapped_column(String(200), unique=True, nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text)
     agent_type: Mapped[AgentType] = mapped_column(
-        ENUM(AgentType, name="agenttype", create_type=True),
+        ENUM(AgentType, name="agenttype", create_type=True, values_callable=lambda e: [x.value for x in e]),
         nullable=False,
         server_default=AgentType.PLATFORM.value,
     )

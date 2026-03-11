@@ -18,7 +18,7 @@ class FundingRound(Base, UUIDMixin, TimestampMixin):
         UUID(as_uuid=True), ForeignKey("startups.id", ondelete="CASCADE"), nullable=False, index=True
     )
     round_type: Mapped[FundingRoundType] = mapped_column(
-        ENUM(FundingRoundType, name="fundingroundtype", create_type=True), nullable=False
+        ENUM(FundingRoundType, name="fundingroundtype", create_type=True, values_callable=lambda e: [x.value for x in e]), nullable=False
     )
     amount_raised: Mapped[Optional[int]] = mapped_column(BigInteger)
     pre_money_valuation: Mapped[Optional[int]] = mapped_column(BigInteger)
