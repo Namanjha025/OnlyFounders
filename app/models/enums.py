@@ -164,3 +164,10 @@ class MessageRole(str, enum.Enum):
     ASSISTANT = "assistant"
     SYSTEM = "system"
     TOOL = "tool"
+
+
+class InvitationStatus(str, enum.Enum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    DECLINED = "declined"
+    EXPIRED = "expired"

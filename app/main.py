@@ -10,6 +10,7 @@ from app.routers import (
     financial,
     founder_profile,
     funding_rounds,
+    invitations,
     manager,
     member_documents,
     onboarding,
@@ -48,6 +49,8 @@ app.include_router(member_documents.router)
 app.include_router(tasks.router)
 app.include_router(calendar.router)
 app.include_router(onboarding.router)
+app.include_router(invitations.startup_router)
+app.include_router(invitations.user_router)
 app.include_router(agents.registry_router)
 app.include_router(agents.team_router)
 app.include_router(agents.chat_router)

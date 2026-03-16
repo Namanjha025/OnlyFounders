@@ -14,6 +14,7 @@ from app.models.agent import Agent
 from app.models.task import Task
 from app.models.calendar_event import CalendarEvent
 from app.models.message import Message
+from app.models.invitation import Invitation
 
 __all__ = [
     "Base",
@@ -32,4 +33,5 @@ __all__ = [
     "Task",
     "CalendarEvent",
     "Message",
+    "Invitation",
 ]
