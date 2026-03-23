@@ -21,6 +21,7 @@ from app.routers import (
     startup_members,
     startups,
     tasks,
+    team,
     traction,
     workspaces,
 )
@@ -63,6 +64,7 @@ app.include_router(marketplace.router)
 app.include_router(workspaces.router)
 app.include_router(notifications.router)
 app.include_router(feed.router)
+app.include_router(team.router)
 
 
 @app.get("/health")

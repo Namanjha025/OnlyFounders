@@ -1,18 +1,31 @@
 import { useState, useEffect } from 'react'
 import { ChevronRight, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { agents as agentsApi, type AgentOut } from '@/lib/api'
+import { agents as agentsApi, team as teamApi, type AgentOut, type TeamAgentOut } from '@/lib/api'
 import { resolveIcon } from '@/lib/icons'
 import { AgentProfileModal } from '@/components/AgentProfileModal'
 
 export function Agents() {
   const [agentList, setAgentList] = useState<AgentOut[]>([])
+  const [teamList, setTeamList] = useState<TeamAgentOut[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedAgent, setSelectedAgent] = useState<AgentOut | null>(null)
 
   useEffect(() => {
-    agentsApi.list().then(setAgentList).catch(() => {}).finally(() => setLoading(false))
+    Promise.all([agentsApi.list(), teamApi.list()])
+      .then(([a, t]) => { setAgentList(a); setTeamList(t) })
+      .catch(() => {})
+      .finally(() => setLoading(false))
   }, [])
+
+  const hiredIds = new Set(teamList.map((t) => t.agent_id))
+
+  const handleHire = async (agentId: string) => {
+    try {
+      const ta = await teamApi.hire({ agent_id: agentId })
+      setTeamList((prev) => [...prev, ta])
+    } catch {}
+  }
 
   const categories = [...new Set(agentList.map((a) => a.category).filter(Boolean))]
 
@@ -91,6 +104,8 @@ export function Agents() {
           }}
           open={true}
           onClose={() => setSelectedAgent(null)}
+          onHire={handleHire}
+          isHired={hiredIds.has(selectedAgent.id)}
         />
       )}
     </div>

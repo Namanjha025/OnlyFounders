@@ -228,6 +228,12 @@ class WorkspaceType(str, enum.Enum):
     GOAL = "goal"
 
 
+class CaseStatus(str, enum.Enum):
+    OPEN = "open"
+    IN_PROGRESS = "in_progress"
+    RESOLVED = "resolved"
+
+
 class WorkspaceMessageRole(str, enum.Enum):
     USER = "user"
     ASSISTANT = "assistant"

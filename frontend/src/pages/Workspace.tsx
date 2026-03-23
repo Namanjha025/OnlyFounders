@@ -68,6 +68,13 @@ export function Workspace() {
   const WsIcon = resolveIcon(ws.icon)
   const unreadNotifs = notifs.filter((n) => !n.is_read).length
 
+  const statusColors: Record<string, string> = {
+    open: 'bg-blue-400/10 text-blue-400 border-blue-400/20',
+    in_progress: 'bg-amber-400/10 text-amber-400 border-amber-400/20',
+    resolved: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20',
+  }
+  const statusLabels: Record<string, string> = { open: 'Open', in_progress: 'In Progress', resolved: 'Resolved' }
+
   return (
     <div className="animate-fade-in -m-8 h-screen flex flex-col bg-[#050507]">
       {/* Header */}
@@ -75,8 +82,13 @@ export function Workspace() {
         <div className="flex items-center gap-3">
           <WsIcon className="w-5 h-5 text-zinc-400" />
           <div>
-            <h1 className="text-[16px] font-semibold text-foreground">{ws.name}</h1>
-            <p className="text-[12px] text-zinc-500">{ws.workspace_type} · {ws.agents.length} agents</p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-[16px] font-semibold text-foreground">{ws.name}</h1>
+              <span className={cn('text-[11px] px-2 py-0.5 rounded-full font-medium border', statusColors[ws.case_status] || statusColors.open)}>
+                {statusLabels[ws.case_status] || 'Open'}
+              </span>
+            </div>
+            <p className="text-[12px] text-zinc-500">{ws.agents.length} agents</p>
           </div>
         </div>
         <button onClick={() => setRightOpen(!rightOpen)} className="p-2 text-zinc-500 hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors">

@@ -6,12 +6,13 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from app.models.enums import WorkspaceMessageRole, WorkspaceType
+from app.models.enums import CaseStatus, WorkspaceMessageRole, WorkspaceType
 
 
 class WorkspaceCreate(BaseModel):
     name: str
     workspace_type: WorkspaceType = WorkspaceType.ONGOING
+    case_status: CaseStatus = CaseStatus.OPEN
     goal: Optional[str] = None
     icon: Optional[str] = None
 
@@ -23,6 +24,7 @@ class WorkspaceUpdate(BaseModel):
     status_text: Optional[str] = None
     progress: Optional[int] = None
     icon: Optional[str] = None
+    case_status: Optional[CaseStatus] = None
 
 
 class WorkspaceAgentOut(BaseModel):
@@ -94,6 +96,7 @@ class WorkspaceOut(BaseModel):
     user_id: uuid.UUID
     name: str
     workspace_type: WorkspaceType
+    case_status: CaseStatus = CaseStatus.OPEN
     goal: Optional[str] = None
     brief: Optional[str] = None
     status_text: Optional[str] = None
@@ -113,6 +116,7 @@ class WorkspaceSummary(BaseModel):
     id: uuid.UUID
     name: str
     workspace_type: WorkspaceType
+    case_status: CaseStatus = CaseStatus.OPEN
     icon: Optional[str] = None
     status_text: Optional[str] = None
     progress: Optional[int] = None

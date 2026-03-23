@@ -30,6 +30,7 @@ from app.models.workspace import (
 )
 from app.models.notification import Notification
 from app.models.feed_event import FeedEvent
+from app.models.team_agent import TeamAgent
 
 __all__ = [
     "Base",
@@ -60,4 +61,5 @@ __all__ = [
     "WorkspaceTask",
     "Notification",
     "FeedEvent",
+    "TeamAgent",
 ]

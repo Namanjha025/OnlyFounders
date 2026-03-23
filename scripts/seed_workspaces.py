@@ -157,6 +157,7 @@ WORKSPACE_DEFS = [
     {
         "name": "Marketing",
         "workspace_type": "ongoing",
+        "case_status": "in_progress",
         "goal": "Launch product marketing for developer audience",
         "icon": "Megaphone",
         "agent_slugs": ["content", "seo", "social"],
@@ -164,6 +165,7 @@ WORKSPACE_DEFS = [
     {
         "name": "Legal & Registration",
         "workspace_type": "goal",
+        "case_status": "in_progress",
         "goal": "Incorporate as Private Limited and complete initial compliance",
         "icon": "Scale",
         "agent_slugs": ["registration", "compliance"],
@@ -171,10 +173,22 @@ WORKSPACE_DEFS = [
     {
         "name": "Fundraising",
         "workspace_type": "goal",
+        "case_status": "open",
         "goal": "Close pre-seed round — target $250K",
         "icon": "TrendingUp",
         "agent_slugs": ["funding", "pitch"],
     },
+]
+
+TEAM_DEFS = [
+    {"slug": "content", "role": "Head of Content", "jd": "Creates all written content — blog posts, landing pages, docs, and email sequences. Focused on developer audiences with technical depth."},
+    {"slug": "seo", "role": "SEO Specialist", "jd": "Audits pages, optimizes meta tags, researches keywords, and tracks search rankings to grow organic traffic."},
+    {"slug": "social", "role": "Social Media Manager", "jd": "Plans content calendars, drafts social copy for Twitter/X and LinkedIn, schedules posts, and tracks engagement."},
+    {"slug": "registration", "role": "Company Registration Lead", "jd": "Handles Pvt Ltd, LLP, OPC incorporation — SPICe+, MCA filings, DSC/DIN, and post-incorporation setup."},
+    {"slug": "compliance", "role": "Compliance Officer", "jd": "Tracks all statutory deadlines, ROC filings, AGM requirements, and regulatory compliance for the company."},
+    {"slug": "funding", "role": "Government Funding Researcher", "jd": "Researches and matches government schemes, grants, and credit-linked programs to the startup's profile."},
+    {"slug": "pitch", "role": "Fundraising Strategist", "jd": "Builds pitch decks, financial models, one-pagers, and prepares data rooms for investor outreach."},
+    {"slug": "pm", "role": "Product Manager", "jd": "Writes PRDs, plans roadmaps, runs sprint management, and handles feature prioritization across the product."},
 ]
 
 
@@ -332,13 +346,33 @@ async def seed():
             else:
                 print(f"  ERROR creating {slug}: {res.text}")
 
-        # Create workspaces
-        print("\nCreating workspaces...")
+        # Hire agents to team
+        print("\nHiring agents to team...")
+        for td in TEAM_DEFS:
+            agent_id = agent_id_map.get(td["slug"])
+            if not agent_id:
+                print(f"  SKIP: {td['slug']} (agent not found)")
+                continue
+            res = await client.post("/team/", json={
+                "agent_id": agent_id,
+                "role": td["role"],
+                "job_description": td["jd"],
+            }, headers=headers)
+            if res.status_code == 201:
+                print(f"  Hired: {td['slug']} as {td['role']}")
+            elif res.status_code == 409:
+                print(f"  Already hired: {td['slug']}")
+            else:
+                print(f"  ERROR hiring {td['slug']}: {res.text}")
+
+        # Create workspaces (cases)
+        print("\nCreating cases...")
         for ws_def in WORKSPACE_DEFS:
             ws_name = ws_def["name"]
             res = await client.post("/workspaces/", json={
                 "name": ws_name,
                 "workspace_type": ws_def["workspace_type"],
+                "case_status": ws_def.get("case_status", "open"),
                 "goal": ws_def["goal"],
                 "icon": ws_def["icon"],
             }, headers=headers)

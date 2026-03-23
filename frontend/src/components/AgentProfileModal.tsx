@@ -17,9 +17,11 @@ interface Props {
   agent: AgentProfile | null
   open: boolean
   onClose: () => void
+  onHire?: (agentId: string) => void
+  isHired?: boolean
 }
 
-export function AgentProfileModal({ agent, open, onClose }: Props) {
+export function AgentProfileModal({ agent, open, onClose, onHire, isHired }: Props) {
   if (!open || !agent) return null
 
   const Icon = agent.icon
@@ -135,15 +137,19 @@ export function AgentProfileModal({ agent, open, onClose }: Props) {
         {/* Action button */}
         <div className="p-8 pt-8">
           <button
+            onClick={() => onHire?.(agent.id)}
+            disabled={isHired}
             className={cn(
               'w-full py-3 rounded-xl text-[15px] font-semibold transition-colors',
-              'bg-white text-black hover:bg-zinc-200'
+              isHired
+                ? 'bg-white/[0.06] text-zinc-500 cursor-default'
+                : 'bg-white text-black hover:bg-zinc-200'
             )}
           >
-            Add to Workspace
+            {isHired ? 'Already on Team' : 'Hire to Team'}
           </button>
           <p className="text-center text-[12px] text-zinc-600 mt-2">
-            Adds this agent to your workspace where it starts working immediately.
+            {isHired ? 'This agent is already on your team.' : 'Adds this agent to your team — assign them to cases anytime.'}
           </p>
         </div>
       </div>

@@ -11,6 +11,11 @@ import {
   TrendingUp,
   Briefcase,
   Folder,
+  Users,
+  UserPlus,
+  Shield,
+  Code,
+  Palette,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -27,6 +32,11 @@ const iconMap: Record<string, LucideIcon> = {
   TrendingUp,
   Briefcase,
   Folder,
+  Users,
+  UserPlus,
+  Shield,
+  Code,
+  Palette,
 }
 
 export function resolveIcon(name: string | null | undefined): LucideIcon {

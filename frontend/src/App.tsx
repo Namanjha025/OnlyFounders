@@ -13,6 +13,7 @@ import { Workspace } from '@/pages/Workspace'
 import { Agents } from '@/pages/Agents'
 import { InboxPage } from '@/pages/InboxPage'
 import { Feed } from '@/pages/Feed'
+import { Team } from '@/pages/Team'
 
 export default function App() {
   const { user, hasProfile, loading } = useAuth()
@@ -32,6 +33,7 @@ export default function App() {
               <Route path="/feed" element={<Feed />} />
               <Route path="/manager" element={<Manager />} />
               <Route path="/notifications" element={<InboxPage />} />
+              <Route path="/team" element={<Team />} />
               <Route path="/workspaces/:workspaceId" element={<Workspace />} />
               <Route path="/agents" element={<Agents />} />
               <Route path="/marketplace" element={<Marketplace />} />

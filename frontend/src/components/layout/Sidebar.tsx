@@ -12,28 +12,43 @@ import {
   LogOut,
   Plus,
   User,
-  Folder,
+  Users,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuth } from '@/lib/auth'
-import { workspaces as wsApi, type WorkspaceSummary } from '@/lib/api'
+import { workspaces as wsApi, team as teamApi, type WorkspaceSummary, type TeamAgentOut } from '@/lib/api'
 import { resolveIcon } from '@/lib/icons'
+
+const STATUS_DOT: Record<string, string> = {
+  open: 'bg-blue-400',
+  in_progress: 'bg-amber-400',
+  resolved: 'bg-emerald-400',
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  open: 'Open',
+  in_progress: 'In Progress',
+  resolved: 'Resolved',
+}
 
 export function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
   const { logout, user, profile } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
-  const [workspacesOpen, setWorkspacesOpen] = useState(true)
+  const [casesOpen, setCasesOpen] = useState(true)
+  const [teamOpen, setTeamOpen] = useState(true)
   const [exploreOpen, setExploreOpen] = useState(true)
   const [wsList, setWsList] = useState<WorkspaceSummary[]>([])
+  const [teamList, setTeamList] = useState<TeamAgentOut[]>([])
 
   const userName = user ? `${user.first_name} ${user.last_name}` : 'User'
   const userRole = profile?.profile_type || user?.marketplace_role || 'Member'
 
   useEffect(() => {
     wsApi.list().then(setWsList).catch(() => {})
+    teamApi.list().then(setTeamList).catch(() => {})
   }, [])
 
   const handleLogout = () => {
@@ -71,30 +86,73 @@ export function Sidebar() {
         <NavItem to="/feed" icon={Activity} label="Feed" active={isActive('/feed')} collapsed={collapsed} />
         <NavItem to="/manager" icon={Sparkles} label="Chat" active={isActive('/manager')} collapsed={collapsed} />
 
+        {/* My Team */}
         {!collapsed && (
           <div className="pt-5 pb-1">
             <button
-              onClick={() => setWorkspacesOpen(!workspacesOpen)}
+              onClick={() => setTeamOpen(!teamOpen)}
               className="flex items-center justify-between w-full px-3 group"
             >
               <span className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium group-hover:text-zinc-400 transition-colors">
-                My Workspaces
+                My Team
               </span>
               <div className="flex items-center gap-1">
-                <Plus className="w-3.5 h-3.5 text-zinc-600 hover:text-zinc-300 transition-colors" />
-                <ChevronDown className={cn('w-3.5 h-3.5 text-zinc-600 transition-transform', !workspacesOpen && '-rotate-90')} />
+                <ChevronDown className={cn('w-3.5 h-3.5 text-zinc-600 transition-transform', !teamOpen && '-rotate-90')} />
               </div>
             </button>
           </div>
         )}
 
-        {(collapsed || workspacesOpen) && wsList.map((ws) => {
+        {(collapsed || teamOpen) && (
+          <>
+            <NavItem to="/team" icon={Users} label={`Team (${teamList.length})`} active={isActive('/team')} collapsed={collapsed} />
+            {!collapsed && teamList.slice(0, 4).map((ta) => {
+              const AgentIcon = resolveIcon(ta.agent_icon)
+              return (
+                <div
+                  key={ta.id}
+                  className="flex items-center gap-2.5 px-3 py-1.5 pl-9 text-[13px] text-zinc-500"
+                >
+                  <AgentIcon className="w-3.5 h-3.5 shrink-0" style={{ color: ta.agent_color || '#666' }} />
+                  <span className="truncate">{ta.agent_name}</span>
+                </div>
+              )
+            })}
+            {!collapsed && teamList.length > 4 && (
+              <Link to="/team" className="block px-3 pl-9 py-1 text-[12px] text-zinc-600 hover:text-zinc-400 transition-colors">
+                +{teamList.length - 4} more
+              </Link>
+            )}
+          </>
+        )}
+
+        {/* Cases */}
+        {!collapsed && (
+          <div className="pt-5 pb-1">
+            <button
+              onClick={() => setCasesOpen(!casesOpen)}
+              className="flex items-center justify-between w-full px-3 group"
+            >
+              <span className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium group-hover:text-zinc-400 transition-colors">
+                Cases
+              </span>
+              <div className="flex items-center gap-1">
+                <Plus className="w-3.5 h-3.5 text-zinc-600 hover:text-zinc-300 transition-colors" />
+                <ChevronDown className={cn('w-3.5 h-3.5 text-zinc-600 transition-transform', !casesOpen && '-rotate-90')} />
+              </div>
+            </button>
+          </div>
+        )}
+
+        {(collapsed || casesOpen) && wsList.map((ws) => {
           const WsIcon = resolveIcon(ws.icon)
           const wsActive = location.pathname === `/workspaces/${ws.id}`
+          const dotColor = STATUS_DOT[ws.case_status] || STATUS_DOT.open
           return (
             <Link
               key={ws.id}
               to={`/workspaces/${ws.id}`}
+              title={!collapsed ? undefined : `${ws.name} — ${STATUS_LABEL[ws.case_status] || 'Open'}`}
               className={cn(
                 'flex items-center gap-3 rounded-lg text-[14px] font-medium transition-all duration-150 group relative',
                 collapsed ? 'px-3 py-2.5 justify-center' : 'px-3 py-2',
@@ -104,7 +162,10 @@ export function Sidebar() {
               {wsActive && !collapsed && (
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-white rounded-r-full" />
               )}
-              <WsIcon className={cn('w-[16px] h-[16px] shrink-0', wsActive ? 'text-white' : 'text-muted-foreground group-hover:text-foreground')} />
+              <div className="relative shrink-0">
+                <WsIcon className={cn('w-[16px] h-[16px]', wsActive ? 'text-white' : 'text-muted-foreground group-hover:text-foreground')} />
+                <div className={cn('absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-[#0c0c10]', dotColor)} />
+              </div>
               {!collapsed && <span className="truncate">{ws.name}</span>}
               {!collapsed && ws.notification_count > 0 && (
                 <span className="ml-auto text-[11px] px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400 font-medium">

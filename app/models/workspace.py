@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import ENUM, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, UUIDMixin
-from app.models.enums import WorkspaceMessageRole, WorkspaceType
+from app.models.enums import CaseStatus, WorkspaceMessageRole, WorkspaceType
 
 
 class Workspace(Base, UUIDMixin, TimestampMixin):
@@ -22,6 +22,11 @@ class Workspace(Base, UUIDMixin, TimestampMixin):
         ENUM(WorkspaceType, name="workspacetype", create_type=True,
              values_callable=lambda e: [x.value for x in e]),
         nullable=False, server_default=WorkspaceType.ONGOING.value,
+    )
+    case_status: Mapped[CaseStatus] = mapped_column(
+        ENUM(CaseStatus, name="casestatus", create_type=True,
+             values_callable=lambda e: [x.value for x in e]),
+        nullable=False, server_default=CaseStatus.OPEN.value,
     )
     goal: Mapped[Optional[str]] = mapped_column(Text)
     brief: Mapped[Optional[str]] = mapped_column(Text)

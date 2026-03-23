@@ -117,6 +117,7 @@ async def list_workspaces(
             id=ws.id,
             name=ws.name,
             workspace_type=ws.workspace_type,
+            case_status=ws.case_status,
             icon=ws.icon,
             status_text=ws.status_text,
             progress=ws.progress,
@@ -141,6 +142,7 @@ async def create_workspace(
     await db.refresh(ws)
     return WorkspaceOut(
         id=ws.id, user_id=ws.user_id, name=ws.name, workspace_type=ws.workspace_type,
+        case_status=ws.case_status,
         goal=ws.goal, brief=ws.brief, status_text=ws.status_text, progress=ws.progress,
         icon=ws.icon, is_active=ws.is_active, created_at=ws.created_at, updated_at=ws.updated_at,
     )
@@ -174,6 +176,7 @@ async def get_workspace(
 
     return WorkspaceOut(
         id=ws.id, user_id=ws.user_id, name=ws.name, workspace_type=ws.workspace_type,
+        case_status=ws.case_status,
         goal=ws.goal, brief=ws.brief, status_text=ws.status_text, progress=ws.progress,
         icon=ws.icon, is_active=ws.is_active, created_at=ws.created_at, updated_at=ws.updated_at,
         agents=[_agent_out(wa) for wa in ws.agents],
@@ -196,6 +199,7 @@ async def update_workspace(
     await db.refresh(ws)
     return WorkspaceOut(
         id=ws.id, user_id=ws.user_id, name=ws.name, workspace_type=ws.workspace_type,
+        case_status=ws.case_status,
         goal=ws.goal, brief=ws.brief, status_text=ws.status_text, progress=ws.progress,
         icon=ws.icon, is_active=ws.is_active, created_at=ws.created_at, updated_at=ws.updated_at,
     )

@@ -154,10 +154,13 @@ export interface PaginatedResponse extends DiscoverResponse {
 
 // ── Workspaces ──────────────────────────────────────────────────
 
+export type CaseStatus = 'open' | 'in_progress' | 'resolved'
+
 export interface WorkspaceSummary {
   id: string
   name: string
   workspace_type: 'ongoing' | 'goal'
+  case_status: CaseStatus
   icon: string | null
   status_text: string | null
   progress: number | null
@@ -211,6 +214,7 @@ export interface WorkspaceOut {
   user_id: string
   name: string
   workspace_type: 'ongoing' | 'goal'
+  case_status: CaseStatus
   goal: string | null
   brief: string | null
   status_text: string | null
@@ -348,6 +352,39 @@ export const agents = {
 
   get: (id: string) =>
     request<AgentOut>(`/agents/${id}`),
+}
+
+// ── Team ────────────────────────────────────────────────────────
+
+export interface TeamAgentOut {
+  id: string
+  user_id: string
+  agent_id: string
+  role: string | null
+  job_description: string | null
+  agent_name: string | null
+  agent_slug: string | null
+  agent_description: string | null
+  agent_category: string | null
+  agent_icon: string | null
+  agent_color: string | null
+  agent_capabilities: string[] | null
+  created_at: string
+  updated_at: string
+}
+
+export const team = {
+  list: () =>
+    request<TeamAgentOut[]>('/team/'),
+
+  hire: (data: { agent_id: string; role?: string; job_description?: string }) =>
+    request<TeamAgentOut>('/team/', { method: 'POST', body: JSON.stringify(data) }),
+
+  update: (id: string, data: { role?: string; job_description?: string }) =>
+    request<TeamAgentOut>(`/team/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  remove: (id: string) =>
+    request<void>(`/team/${id}`, { method: 'DELETE' }),
 }
 
 // ── Marketplace ─────────────────────────────────────────────────
