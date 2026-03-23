@@ -5,21 +5,14 @@ import { AppShell } from '@/components/layout/AppShell'
 import { Calendar } from '@/pages/Calendar'
 import { LoginPlaceholder } from '@/pages/LoginPlaceholder'
 import { Manager } from '@/pages/Manager'
-import { PlaceholderPage } from '@/pages/PlaceholderPage'
-import { ServiceChat } from '@/pages/ServiceChat'
 import { Marketplace } from '@/pages/Marketplace'
 import { MarketplaceTwinPlaceholder } from '@/pages/MarketplaceTwinPlaceholder'
 import { MarketplaceProfilePage } from '@/pages/MarketplaceProfile'
 import { MarketplaceDocuments } from '@/pages/MarketplaceDocuments'
-import { Services } from '@/pages/Services'
-
-function RequireProfile() {
-  const { user, hasProfile, loading } = useAuth()
-  if (loading) return null
-  if (!user) return <Navigate to="/login" replace />
-  if (!hasProfile) return <Navigate to="/login" replace />
-  return null
-}
+import { Workspace } from '@/pages/Workspace'
+import { Agents } from '@/pages/Agents'
+import { InboxPage } from '@/pages/InboxPage'
+import { Feed } from '@/pages/Feed'
 
 export default function App() {
   const { user, hasProfile, loading } = useAuth()
@@ -35,10 +28,12 @@ export default function App() {
           !hasProfile ? <Navigate to="/login" replace /> :
           <AppShell>
             <Routes>
-              <Route path="/" element={<PlaceholderPage title="Overview" />} />
+              <Route path="/" element={<Navigate to="/feed" replace />} />
+              <Route path="/feed" element={<Feed />} />
               <Route path="/manager" element={<Manager />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/services/:serviceId" element={<ServiceChat />} />
+              <Route path="/notifications" element={<InboxPage />} />
+              <Route path="/workspaces/:workspaceId" element={<Workspace />} />
+              <Route path="/agents" element={<Agents />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/me" element={<MarketplaceProfilePage />} />
               <Route path="/marketplace/documents" element={<MarketplaceDocuments />} />

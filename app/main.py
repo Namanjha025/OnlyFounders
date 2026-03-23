@@ -7,6 +7,7 @@ from app.routers import (
     calendar,
     documents,
     equity,
+    feed,
     financial,
     founder_profile,
     funding_rounds,
@@ -14,12 +15,14 @@ from app.routers import (
     manager,
     marketplace,
     member_documents,
+    notifications,
     onboarding,
     product,
     startup_members,
     startups,
     tasks,
     traction,
+    workspaces,
 )
 
 app = FastAPI(
@@ -57,6 +60,9 @@ app.include_router(agents.team_router)
 app.include_router(agents.chat_router)
 app.include_router(manager.router)
 app.include_router(marketplace.router)
+app.include_router(workspaces.router)
+app.include_router(notifications.router)
+app.include_router(feed.router)
 
 
 @app.get("/health")

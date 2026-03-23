@@ -25,3 +25,10 @@ class Agent(Base, UUIDMixin, TimestampMixin):
     skills: Mapped[Optional[dict]] = mapped_column(JSONB)
     tools_config: Mapped[Optional[dict]] = mapped_column(JSONB)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+
+    category: Mapped[Optional[str]] = mapped_column(String(100))
+    icon: Mapped[Optional[str]] = mapped_column(String(50))
+    color: Mapped[Optional[str]] = mapped_column(String(20))
+    capabilities: Mapped[Optional[dict]] = mapped_column(JSONB)
+    instructions: Mapped[Optional[dict]] = mapped_column(JSONB)
+    connections: Mapped[Optional[dict]] = mapped_column(JSONB)

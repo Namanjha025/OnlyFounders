@@ -218,3 +218,36 @@ class FeeStructure(str, enum.Enum):
     RETAINER = "retainer"
     SUCCESS_FEE = "success_fee"
     PRO_BONO = "pro_bono"
+
+
+# ── Workspace enums ──────────────────────────────────────────────
+
+
+class WorkspaceType(str, enum.Enum):
+    ONGOING = "ongoing"
+    GOAL = "goal"
+
+
+class WorkspaceMessageRole(str, enum.Enum):
+    USER = "user"
+    ASSISTANT = "assistant"
+    ACTIVITY = "activity"
+
+
+class NotificationType(str, enum.Enum):
+    APPROVAL = "approval"
+    REPORT = "report"
+
+
+class NotificationPriority(str, enum.Enum):
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
+class FeedEventType(str, enum.Enum):
+    TASK_COMPLETE = "task_complete"
+    TASK_STARTED = "task_started"
+    FILE_CREATED = "file_created"
+    STATUS_UPDATE = "status_update"
+    APPROVAL_REQUEST = "approval_request"

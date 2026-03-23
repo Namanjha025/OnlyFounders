@@ -17,6 +17,12 @@ class AgentCreate(BaseModel):
     system_prompt: Optional[str] = None
     skills: Optional[List[str]] = None
     tools_config: Optional[Dict[str, Any]] = None
+    category: Optional[str] = None
+    icon: Optional[str] = None
+    color: Optional[str] = None
+    capabilities: Optional[List[str]] = None
+    instructions: Optional[List[str]] = None
+    connections: Optional[List[Dict[str, Any]]] = None
 
 
 class AgentUpdate(BaseModel):
@@ -26,6 +32,12 @@ class AgentUpdate(BaseModel):
     skills: Optional[List[str]] = None
     tools_config: Optional[Dict[str, Any]] = None
     is_active: Optional[bool] = None
+    category: Optional[str] = None
+    icon: Optional[str] = None
+    color: Optional[str] = None
+    capabilities: Optional[List[str]] = None
+    instructions: Optional[List[str]] = None
+    connections: Optional[List[Dict[str, Any]]] = None
 
 
 class AgentOut(BaseModel):
@@ -38,6 +50,12 @@ class AgentOut(BaseModel):
     skills: Optional[List[str]] = None
     tools_config: Optional[Dict[str, Any]] = None
     is_active: bool
+    category: Optional[str] = None
+    icon: Optional[str] = None
+    color: Optional[str] = None
+    capabilities: Optional[List[str]] = None
+    instructions: Optional[List[str]] = None
+    connections: Optional[List[Dict[str, Any]]] = None
     created_at: datetime
     updated_at: datetime
 

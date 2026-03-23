@@ -22,6 +22,14 @@ from app.models.marketplace_profile import (
     ProfessionalProfile,
     ProfileDocument,
 )
+from app.models.workspace import (
+    Workspace,
+    WorkspaceAgent,
+    WorkspaceMessage,
+    WorkspaceTask,
+)
+from app.models.notification import Notification
+from app.models.feed_event import FeedEvent
 
 __all__ = [
     "Base",
@@ -46,4 +54,10 @@ __all__ = [
     "AdvisorProfile",
     "FounderMarketplaceProfile",
     "ProfileDocument",
+    "Workspace",
+    "WorkspaceAgent",
+    "WorkspaceMessage",
+    "WorkspaceTask",
+    "Notification",
+    "FeedEvent",
 ]
