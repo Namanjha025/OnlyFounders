@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   Send, PanelRightClose, PanelRightOpen, CheckCircle2, Circle,
-  Users, FileText, ListChecks, Inbox, Loader2, Folder,
+  Users, FileText, ListChecks, Inbox, Loader2, Folder, ChevronDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { resolveIcon } from '@/lib/icons'
@@ -14,6 +14,7 @@ import {
   type WorkspaceTaskOut,
   type WorkspaceAgentOut,
   type NotificationOut,
+  type CaseStatus,
 } from '@/lib/api'
 
 type RightTab = 'brief' | 'inbox' | 'tasks'
@@ -28,6 +29,7 @@ export function Workspace() {
   const [sending, setSending] = useState(false)
   const [rightOpen, setRightOpen] = useState(true)
   const [rightTab, setRightTab] = useState<RightTab>('brief')
+  const [statusOpen, setStatusOpen] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -74,6 +76,16 @@ export function Workspace() {
     resolved: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20',
   }
   const statusLabels: Record<string, string> = { open: 'Open', in_progress: 'In Progress', resolved: 'Resolved' }
+  const allStatuses: CaseStatus[] = ['open', 'in_progress', 'resolved']
+
+  const handleStatusChange = async (newStatus: CaseStatus) => {
+    setStatusOpen(false)
+    if (newStatus === ws.case_status || !workspaceId) return
+    try {
+      const updated = await wsApi.update(workspaceId, { case_status: newStatus })
+      setWs(updated)
+    } catch {}
+  }
 
   return (
     <div className="animate-fade-in -m-8 h-screen flex flex-col bg-[#050507]">
@@ -84,9 +96,35 @@ export function Workspace() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-[16px] font-semibold text-foreground">{ws.name}</h1>
-              <span className={cn('text-[11px] px-2 py-0.5 rounded-full font-medium border', statusColors[ws.case_status] || statusColors.open)}>
-                {statusLabels[ws.case_status] || 'Open'}
-              </span>
+              <div className="relative">
+                <button
+                  onClick={() => setStatusOpen(!statusOpen)}
+                  className={cn('text-[11px] px-2 py-0.5 rounded-full font-medium border flex items-center gap-1 transition-colors hover:brightness-125', statusColors[ws.case_status] || statusColors.open)}
+                >
+                  {statusLabels[ws.case_status] || 'Open'}
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+                {statusOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setStatusOpen(false)} />
+                    <div className="absolute top-full left-0 mt-1 z-50 bg-[#141418] border border-white/[0.1] rounded-lg shadow-xl py-1 min-w-[140px]">
+                      {allStatuses.map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => handleStatusChange(s)}
+                          className={cn(
+                            'w-full text-left px-3 py-2 text-[13px] font-medium transition-colors flex items-center gap-2',
+                            s === ws.case_status ? 'text-white bg-white/[0.06]' : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                          )}
+                        >
+                          <div className={cn('w-2 h-2 rounded-full', s === 'open' ? 'bg-blue-400' : s === 'in_progress' ? 'bg-amber-400' : 'bg-emerald-400')} />
+                          {statusLabels[s]}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
             <p className="text-[12px] text-zinc-500">{ws.agents.length} agents</p>
           </div>
@@ -108,7 +146,7 @@ export function Workspace() {
             <div className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5">
               <input
                 className="flex-1 bg-transparent text-[14px] text-foreground placeholder-zinc-600 outline-none"
-                placeholder="Message this workspace..."
+                placeholder="Message this case..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}

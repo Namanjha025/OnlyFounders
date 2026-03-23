@@ -91,7 +91,7 @@ function FeedRow({ item }: { item: FeedEventOut }) {
 
   return (
     <Link
-      to={`/workspaces/${item.workspace_id}`}
+      to={`/cases/${item.workspace_id}`}
       className={cn(
         'flex items-start gap-3 px-4 py-3.5 rounded-xl transition-colors group',
         item.event_type === 'approval_request'

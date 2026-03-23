@@ -67,7 +67,7 @@ export function NotificationBell() {
                 return (
                   <Link
                     key={item.id}
-                    to={item.workspace_id ? `/workspaces/${item.workspace_id}` : '/notifications'}
+                    to={item.workspace_id ? `/cases/${item.workspace_id}` : '/notifications'}
                     onClick={() => setOpen(false)}
                     className="flex items-start gap-3 px-4 py-3.5 hover:bg-white/[0.04] transition-colors border-b border-white/[0.04] last:border-b-0"
                   >

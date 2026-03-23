@@ -235,7 +235,7 @@ export const workspaces = {
   get: (id: string) =>
     request<WorkspaceOut>(`/workspaces/${id}`),
 
-  create: (data: { name: string; workspace_type?: string; goal?: string; icon?: string }) =>
+  create: (data: { name: string; workspace_type?: string; case_status?: CaseStatus; goal?: string; icon?: string }) =>
     request<WorkspaceOut>('/workspaces/', { method: 'POST', body: JSON.stringify(data) }),
 
   update: (id: string, data: Record<string, unknown>) =>

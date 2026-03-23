@@ -133,11 +133,21 @@ export function Sidebar() {
               onClick={() => setCasesOpen(!casesOpen)}
               className="flex items-center justify-between w-full px-3 group"
             >
-              <span className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium group-hover:text-zinc-400 transition-colors">
+              <Link
+                to="/cases"
+                onClick={(e) => e.stopPropagation()}
+                className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium group-hover:text-zinc-400 transition-colors"
+              >
                 Cases
-              </span>
+              </Link>
               <div className="flex items-center gap-1">
-                <Plus className="w-3.5 h-3.5 text-zinc-600 hover:text-zinc-300 transition-colors" />
+                <Link
+                  to="/cases?new=1"
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-zinc-600 hover:text-zinc-300 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </Link>
                 <ChevronDown className={cn('w-3.5 h-3.5 text-zinc-600 transition-transform', !casesOpen && '-rotate-90')} />
               </div>
             </button>
@@ -146,12 +156,12 @@ export function Sidebar() {
 
         {(collapsed || casesOpen) && wsList.map((ws) => {
           const WsIcon = resolveIcon(ws.icon)
-          const wsActive = location.pathname === `/workspaces/${ws.id}`
+          const wsActive = location.pathname === `/cases/${ws.id}`
           const dotColor = STATUS_DOT[ws.case_status] || STATUS_DOT.open
           return (
             <Link
               key={ws.id}
-              to={`/workspaces/${ws.id}`}
+              to={`/cases/${ws.id}`}
               title={!collapsed ? undefined : `${ws.name} — ${STATUS_LABEL[ws.case_status] || 'Open'}`}
               className={cn(
                 'flex items-center gap-3 rounded-lg text-[14px] font-medium transition-all duration-150 group relative',

@@ -178,8 +178,8 @@ function DetailView({ item }: { item: NotificationOut }) {
           </button>
         ))}
         {item.workspace_id && (
-          <Link to={`/workspaces/${item.workspace_id}`} className="px-4 py-2 rounded-lg text-[14px] font-medium text-zinc-400 hover:text-zinc-200 transition-colors flex items-center gap-1.5">
-            Open Workspace <ArrowRight className="w-3.5 h-3.5" />
+          <Link to={`/cases/${item.workspace_id}`} className="px-4 py-2 rounded-lg text-[14px] font-medium text-zinc-400 hover:text-zinc-200 transition-colors flex items-center gap-1.5">
+            Open Case <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         )}
       </div>
