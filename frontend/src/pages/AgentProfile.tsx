@@ -1,43 +1,13 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Bot, CheckCircle2, Plug, Heart, Briefcase, Users, Loader2 } from 'lucide-react'
+import { useParams } from 'react-router-dom'
+import { MapPin, Heart, Briefcase, Users, CheckCircle2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { agents as agentsApi, team as teamApi, type AgentOut, type TeamAgentOut } from '@/lib/api'
 import { resolveIcon } from '@/lib/icons'
-
-function iconGradient(seed: string, color?: string | null): string {
-  if (color) {
-    const r = parseInt(color.slice(1, 3), 16) || 80
-    const g = parseInt(color.slice(3, 5), 16) || 80
-    const b = parseInt(color.slice(5, 7), 16) || 80
-    return `linear-gradient(135deg, rgba(${r},${g},${b},0.35), rgba(${r},${g},${b},0.15))`
-  }
-  let h = 0
-  for (let i = 0; i < seed.length; i++) h = (h + seed.charCodeAt(i) * (i + 1)) % 360
-  return `linear-gradient(135deg, hsl(${h} 50% 35%), hsl(${(h + 50) % 360} 45% 25%))`
-}
-
-function CapabilityRing({ count, color }: { count: number; color: string }) {
-  const r = 40
-  const circ = 2 * Math.PI * r
-  const score = Math.min(count / 10, 1)
-  const offset = circ - score * circ
-  return (
-    <div className="relative w-24 h-24">
-      <svg className="w-24 h-24 -rotate-90" viewBox="0 0 96 96">
-        <circle cx="48" cy="48" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
-        <circle cx="48" cy="48" r={r} fill="none" stroke={color}
-          strokeWidth="5" strokeLinecap="round"
-          strokeDasharray={circ} strokeDashoffset={offset}
-          className="transition-all duration-1000" />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-white">{count}</span>
-        <span className="text-[10px] text-zinc-500">skills</span>
-      </div>
-    </div>
-  )
-}
+import {
+  avatarGradientVivid,
+  ProfileTopBar, ProfileSection, ProfileSidebarCard, QuickInfoRow, ScoreRing,
+} from '@/components/shared'
 
 export function AgentProfile() {
   const { agentId } = useParams<{ agentId: string }>()
@@ -73,7 +43,7 @@ export function AgentProfile() {
     <div className="animate-fade-in -m-8 min-h-screen bg-background px-6 py-10">
       <div className="max-w-xl mx-auto text-center py-20">
         <p className="text-red-400 mb-4">{error}</p>
-        <Link to="/agents" className="text-zinc-300 hover:underline text-sm">Back to agents</Link>
+        <a href="/agents" className="text-zinc-300 hover:underline text-sm">Back to agents</a>
       </div>
     </div>
   )
@@ -83,38 +53,36 @@ export function AgentProfile() {
   const capabilities = agent.capabilities ?? []
   const instructions = agent.instructions ?? []
   const connections = agent.connections ?? []
+  const capScore = Math.min(capabilities.length / 10, 1)
+  const ringColor = capScore >= 0.8 ? '#22d3ee' : capScore >= 0.6 ? '#34d399' : capScore >= 0.4 ? '#facc15' : '#52525b'
 
   return (
     <div className="animate-fade-in -m-8 min-h-screen bg-background text-white">
-      {/* Top bar — same as marketplace */}
-      <div className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
-          <Link to="/agents" className="flex items-center gap-2 text-sm text-zinc-400 hover:text-zinc-300 transition">
-            <ArrowLeft className="w-4 h-4" /> Back to agents
-          </Link>
-          {!isHired && (
-            <button
-              onClick={handleHire}
-              className="flex items-center gap-2 bg-white text-black px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-zinc-300 transition"
-            >
-              <Users className="w-3.5 h-3.5" /> Hire to Team
-            </button>
-          )}
-        </div>
-      </div>
+      <ProfileTopBar
+        backTo="/agents"
+        backLabel="Back to agents"
+        action={!isHired ? (
+          <button
+            onClick={handleHire}
+            className="flex items-center gap-2 bg-white text-black px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-zinc-300 transition"
+          >
+            <Users className="w-3.5 h-3.5" /> Hire to Team
+          </button>
+        ) : undefined}
+      />
 
       <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
 
-          {/* ── Left Column: Main Profile ──────────────────────── */}
+          {/* ── Left Column ──────────────────────────────────────── */}
           <div className="space-y-6">
-            {/* Avatar + Name card — matches marketplace pattern */}
-            <div className="rounded-2xl border border-border bg-card p-8">
+            {/* Avatar + Name — same pattern as marketplace */}
+            <ProfileSection padding="p-8">
               <div className="flex flex-col items-center">
-                <div className="w-28 h-28 rounded-full border-[3px] p-1" style={{ borderColor: `${agent.color || '#666'}60` }}>
+                <div className="w-28 h-28 rounded-full border-[3px] border-white/40 p-1">
                   <div
                     className="w-full h-full rounded-full flex items-center justify-center"
-                    style={{ background: iconGradient(agent.name, agent.color) }}
+                    style={{ background: avatarGradientVivid(agent.name) }}
                   >
                     <Icon className="w-12 h-12" style={{ color: agent.color || '#ccc' }} />
                   </div>
@@ -127,12 +95,11 @@ export function AgentProfile() {
                   </p>
                 )}
               </div>
-            </div>
+            </ProfileSection>
 
-            {/* About + Capabilities (like About + Skills in marketplace) */}
+            {/* About + Capabilities — same as About + Skills in marketplace */}
             {(agent.description || capabilities.length > 0) && (
-              <div className="rounded-2xl border border-border bg-card p-6">
-                <h2 className="font-semibold text-[15px] text-foreground mb-3">About</h2>
+              <ProfileSection title="About">
                 {agent.description && (
                   <div className="border-l-2 border-white/30 pl-4 mb-4">
                     <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line">{agent.description}</p>
@@ -150,50 +117,39 @@ export function AgentProfile() {
                     </div>
                   </div>
                 )}
-              </div>
+              </ProfileSection>
             )}
 
-            {/* Instructions (like "How I Can Help" in marketplace) */}
+            {/* Instructions — same pattern as "How I Can Help" */}
             {instructions.length > 0 && (
-              <div className="rounded-2xl border border-border bg-card p-6">
-                <h2 className="flex items-center gap-2 font-semibold text-[15px] text-foreground mb-3">
-                  <Heart className="w-4 h-4 text-zinc-400" />
-                  What This Agent Does
-                </h2>
+              <ProfileSection title="What This Agent Does" icon={Heart}>
                 {instructions.map((instruction, i) => (
                   <div key={i} className="border-l-2 border-white/30 pl-4 mb-3 last:mb-0">
                     <p className="text-sm text-zinc-400">{instruction}</p>
                   </div>
                 ))}
-              </div>
+              </ProfileSection>
             )}
 
-            {/* Connections (like Professional Details in marketplace) */}
+            {/* Connections — same pattern as Professional Details */}
             {connections.length > 0 && (
-              <div className="rounded-2xl border border-border bg-card p-6">
-                <h2 className="flex items-center gap-2 font-semibold text-[15px] text-foreground mb-4">
-                  <Briefcase className="w-4 h-4 text-zinc-300" />
-                  Connections & Integrations
-                </h2>
+              <ProfileSection title="Connections & Integrations" icon={Briefcase}>
                 <div className="grid grid-cols-2 gap-4">
                   {connections.map((conn) => (
                     <div key={conn.name}>
-                      <p className="text-[11px] uppercase tracking-wider text-zinc-500 mb-1">
-                        Integration
-                      </p>
+                      <p className="text-[11px] uppercase tracking-wider text-zinc-500 mb-1">Integration</p>
                       <p className="text-sm text-zinc-200">{conn.name}</p>
                     </div>
                   ))}
                 </div>
-              </div>
+              </ProfileSection>
             )}
           </div>
 
-          {/* ── Right Column: Sidebar ──────────────────────────── */}
+          {/* ── Right Column ─────────────────────────────────────── */}
           <div className="space-y-4">
-            {/* Hire card (like Connect card in marketplace) */}
-            <div className="rounded-2xl border border-border bg-card p-5">
-              <h3 className="font-semibold text-[15px] text-foreground mb-3">Add to Team</h3>
+            {/* Hire card — same pattern as Connect card */}
+            <ProfileSidebarCard title="Add to Team">
               <p className="text-xs text-zinc-500 mb-3">
                 {isHired
                   ? 'This agent is on your team. Assign it to cases anytime.'
@@ -211,34 +167,25 @@ export function AgentProfile() {
               >
                 <Users className="w-4 h-4" /> {isHired ? 'Already on Team' : 'Hire to Team'}
               </button>
-            </div>
+            </ProfileSidebarCard>
 
-            {/* Quick Info (matches marketplace) */}
-            <div className="rounded-2xl border border-border bg-card p-5">
-              <h3 className="font-semibold text-[15px] text-foreground mb-3">Quick Info</h3>
+            {/* Quick Info — same component as marketplace */}
+            <ProfileSidebarCard title="Quick Info">
               <dl className="space-y-2.5">
-                <div className="flex justify-between text-sm">
-                  <dt className="text-zinc-500">Category</dt>
-                  <dd className="text-zinc-200 font-medium capitalize">{agent.category || 'General'}</dd>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <dt className="text-zinc-500">Type</dt>
-                  <dd className="text-zinc-200 font-medium capitalize">{agent.agent_type}</dd>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <dt className="text-zinc-500">Capabilities</dt>
-                  <dd className="text-zinc-200 font-medium">{capabilities.length}</dd>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <dt className="text-zinc-500">Connections</dt>
-                  <dd className="text-zinc-200 font-medium">{connections.length}</dd>
-                </div>
+                <QuickInfoRow label="Category"><span className="capitalize">{agent.category || 'General'}</span></QuickInfoRow>
+                <QuickInfoRow label="Type"><span className="capitalize">{agent.agent_type}</span></QuickInfoRow>
+                <QuickInfoRow label="Capabilities">{capabilities.length}</QuickInfoRow>
+                <QuickInfoRow label="Connections">{connections.length}</QuickInfoRow>
               </dl>
-            </div>
+            </ProfileSidebarCard>
 
-            {/* Capability ring (matches ScoreRing in marketplace) */}
+            {/* Score ring — same component as marketplace */}
             <div className="rounded-2xl border border-border bg-card p-5 flex flex-col items-center">
-              <CapabilityRing count={capabilities.length} color={agent.color || '#666'} />
+              <ScoreRing
+                value={capScore}
+                label="skills"
+                color={ringColor}
+              />
               <p className="text-xs text-zinc-500 mt-3">
                 {capabilities.length >= 8 ? 'Highly Capable' :
                  capabilities.length >= 5 ? 'Well-Rounded' :

@@ -1,28 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Link } from 'react-router-dom'
-import { Search, SlidersHorizontal, MapPin, Sparkles, ChevronDown, X } from 'lucide-react'
+import { Search, SlidersHorizontal, Sparkles, ChevronDown, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { marketplace, type MarketplaceProfile, type FacetResponse } from '@/lib/api'
-
-/* ── Helpers ───────────────────────────────────────────────────── */
-
-function avatarGradient(seed: string): string {
-  let h = 0
-  for (let i = 0; i < seed.length; i++) h = (h + seed.charCodeAt(i) * (i + 1)) % 360
-  return `linear-gradient(135deg, hsl(${h} 35% 28%), hsl(${(h + 45) % 360} 30% 20%))`
-}
-
-function nameInitials(s: string | null): string {
-  if (!s) return '?'
-  return (s.match(/[A-Za-z]+/g) ?? []).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?'
-}
-
-function scoreToColor(score: number): string {
-  const s = Math.min(Math.max(score, 0), 100) / 100
-  const r = s < 0.5 ? 255 : Math.round(255 - (s - 0.5) * 2 * 255)
-  const g = s < 0.5 ? Math.round(s * 2 * 200) : 200
-  return `rgb(${r}, ${g}, 60)`
-}
+import { avatarGradient, nameInitials, scoreToColor, EntityCard, CardSkeleton } from '@/components/shared'
 
 const TABS = [
   { key: '', label: 'All' },
@@ -39,82 +19,24 @@ const SORT_OPTIONS = [
   { value: 'rate_high', label: 'Rate: High→Low' },
 ]
 
-/* ── Profile Card ──────────────────────────────────────────────── */
-
 function ProfileCard({ profile }: { profile: MarketplaceProfile }) {
-  const circ = 2 * Math.PI * 37
   return (
-    <Link
+    <EntityCard
       to={`/marketplace/${profile.id}`}
-      className={cn(
-        'group flex flex-col items-center rounded-2xl bg-card p-6',
-        'border border-border transition-all duration-200',
-        'hover:border-white/[0.12] hover:bg-white/[0.03]',
-      )}
-    >
-      <div className="relative w-[80px] h-[80px] mb-3">
-        <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 80 80">
-          <circle cx="40" cy="40" r="37" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3" />
-          <circle cx="40" cy="40" r="37" fill="none"
-            stroke={scoreToColor(profile.profile_score)}
-            strokeWidth="3" strokeLinecap="round"
-            strokeDasharray={circ}
-            strokeDashoffset={circ - (Math.min(profile.profile_score, 100) / 100) * circ}
-            className="transition-all duration-700" />
-        </svg>
-        <div className="absolute inset-[6px] rounded-full overflow-hidden flex items-center justify-center text-lg font-semibold text-white/90"
+      avatarContent={
+        <div className="w-full h-full flex items-center justify-center text-lg font-semibold text-white/90"
           style={{ background: avatarGradient(profile.display_name || profile.headline || profile.id) }}>
           {nameInitials(profile.display_name || profile.headline)}
         </div>
-      </div>
-
-      {profile.display_name && (
-        <p className="text-[15px] font-semibold text-foreground text-center leading-tight mb-0.5">
-          {profile.display_name}
-        </p>
-      )}
-      <p className={cn(
-        'text-center leading-tight line-clamp-2',
-        profile.display_name ? 'text-[13px] text-muted-foreground' : 'text-[15px] font-semibold text-foreground mb-0.5',
-      )}>
-        {profile.headline || 'Untitled'}
-      </p>
-      <p className="text-[12px] text-muted-foreground capitalize mt-0.5">{profile.profile_type}</p>
-
-      {profile.location && (
-        <p className="flex items-center gap-1 text-[12px] text-muted-foreground mt-1">
-          <MapPin className="w-3 h-3" /> {profile.location}
-        </p>
-      )}
-
-      {profile.bio && (
-        <p className="text-[13px] text-muted-foreground text-center line-clamp-2 leading-relaxed mt-2">
-          {profile.bio}
-        </p>
-      )}
-
-      {profile.skills && profile.skills.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-1 mt-2">
-          {profile.skills.slice(0, 3).map((skill, i) => (
-            <span key={i} className="text-[11px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">{skill}</span>
-          ))}
-          {profile.skills.length > 3 && (
-            <span className="text-[11px] text-muted-foreground">+{profile.skills.length - 3}</span>
-          )}
-        </div>
-      )}
-    </Link>
-  )
-}
-
-function CardSkeleton() {
-  return (
-    <div className="rounded-2xl bg-card border border-border p-6 flex flex-col items-center">
-      <div className="w-[80px] h-[80px] rounded-full bg-secondary animate-pulse mb-3" />
-      <div className="h-4 w-32 bg-secondary rounded animate-pulse mb-2" />
-      <div className="h-3 w-20 bg-secondary rounded animate-pulse mb-3" />
-      <div className="h-10 w-full bg-secondary rounded animate-pulse" />
-    </div>
+      }
+      ringProgress={Math.min(profile.profile_score, 100) / 100}
+      ringColor={scoreToColor(profile.profile_score)}
+      name={profile.display_name || profile.headline || 'Untitled'}
+      subtitle={profile.display_name ? (profile.headline || null) : null}
+      type={profile.profile_type}
+      description={profile.bio}
+      tags={profile.skills ?? undefined}
+    />
   )
 }
 
@@ -135,7 +57,6 @@ function FilterSidebar({
 
   return (
     <div className="space-y-5">
-      {/* Skills */}
       {facets.skills.length > 0 && (
         <div>
           <h4 className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Skills</h4>
@@ -152,7 +73,6 @@ function FilterSidebar({
         </div>
       )}
 
-      {/* Availability (professionals) */}
       {(activeTab === '' || activeTab === 'professional') && facets.availability.length > 0 && (
         <div>
           <h4 className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Availability</h4>
@@ -169,7 +89,6 @@ function FilterSidebar({
         </div>
       )}
 
-      {/* Rate ranges (professionals) */}
       {(activeTab === '' || activeTab === 'professional') && facets.hourly_rate_ranges.length > 0 && (
         <div>
           <h4 className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Hourly Rate</h4>
@@ -189,7 +108,6 @@ function FilterSidebar({
         </div>
       )}
 
-      {/* Locations */}
       {facets.locations.length > 0 && (
         <div>
           <h4 className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Location</h4>
@@ -250,7 +168,6 @@ export function Marketplace() {
       if (activeTab) params.profile_type = activeTab
       Object.entries(filters).forEach(([k, v]) => { params[k] = v })
 
-      // Pick the right endpoint
       let result
       if (search && !activeTab) {
         params.q = search
@@ -359,7 +276,6 @@ export function Marketplace() {
 
         {/* Content: Filters + Grid */}
         <div className={cn('flex gap-6', showFilters ? '' : '')}>
-          {/* Filter sidebar */}
           {showFilters && (
             <aside className="w-56 shrink-0">
               <div className="sticky top-20 bg-card border border-border rounded-2xl p-4">
@@ -369,7 +285,6 @@ export function Marketplace() {
             </aside>
           )}
 
-          {/* Grid */}
           <div className="flex-1">
             {loading ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
