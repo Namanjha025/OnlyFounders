@@ -11,7 +11,6 @@ import {
   Zap,
   LogOut,
   Plus,
-  User,
   Users,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
@@ -209,20 +208,21 @@ export function Sidebar() {
 
         {!collapsed && <div className="pt-3" />}
         <NavItem to="/calendar" icon={CalendarDays} label="Calendar" active={isActive('/calendar')} collapsed={collapsed} />
-        <NavItem to="/marketplace/me" icon={User} label="My Profile" active={isActive('/marketplace/me')} collapsed={collapsed} indent />
       </nav>
 
       <div className="border-t border-border p-3">
         {!collapsed && (
           <div className="flex items-center gap-3 px-3 py-2 mb-2">
-            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold text-white">
-              {getInitials(userName)}
-            </div>
-            <div className="flex-1 flex flex-col min-w-0">
-              <span className="text-sm font-medium text-foreground truncate">{userName}</span>
-              <span className="text-xs text-muted-foreground capitalize">{userRole}</span>
-            </div>
-            <button onClick={handleLogout} className="p-1.5 text-zinc-600 hover:text-zinc-300 transition-colors rounded-lg hover:bg-white/[0.06]" title="Sign out">
+            <Link to="/marketplace/me" className="flex items-center gap-3 flex-1 min-w-0 rounded-lg hover:bg-white/[0.04] -mx-1 px-1 py-0.5 transition-colors">
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold text-white shrink-0">
+                {getInitials(userName)}
+              </div>
+              <div className="flex-1 flex flex-col min-w-0">
+                <span className="text-sm font-medium text-foreground truncate">{userName}</span>
+                <span className="text-xs text-muted-foreground capitalize">{userRole}</span>
+              </div>
+            </Link>
+            <button onClick={handleLogout} className="p-1.5 text-zinc-600 hover:text-zinc-300 transition-colors rounded-lg hover:bg-white/[0.06] shrink-0" title="Sign out">
               <LogOut className="w-4 h-4" />
             </button>
           </div>
