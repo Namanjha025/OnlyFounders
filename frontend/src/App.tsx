@@ -11,6 +11,7 @@ import { MarketplaceProfilePage } from '@/pages/MarketplaceProfile'
 import { MarketplaceDocuments } from '@/pages/MarketplaceDocuments'
 import { Workspace } from '@/pages/Workspace'
 import { Agents } from '@/pages/Agents'
+import { AgentProfile } from '@/pages/AgentProfile'
 import { InboxPage } from '@/pages/InboxPage'
 import { Feed } from '@/pages/Feed'
 import { Team } from '@/pages/Team'
@@ -38,6 +39,7 @@ export default function App() {
               <Route path="/cases" element={<Cases />} />
               <Route path="/cases/:workspaceId/*" element={<Workspace />} />
               <Route path="/agents" element={<Agents />} />
+              <Route path="/agents/:agentId" element={<AgentProfile />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/me" element={<MarketplaceProfilePage />} />
               <Route path="/marketplace/documents" element={<MarketplaceDocuments />} />
