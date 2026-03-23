@@ -15,6 +15,13 @@ from app.models.task import Task
 from app.models.calendar_event import CalendarEvent
 from app.models.message import Message
 from app.models.invitation import Invitation
+from app.models.marketplace_profile import (
+    AdvisorProfile,
+    FounderMarketplaceProfile,
+    MarketplaceProfile,
+    ProfessionalProfile,
+    ProfileDocument,
+)
 
 __all__ = [
     "Base",
@@ -34,4 +41,9 @@ __all__ = [
     "CalendarEvent",
     "Message",
     "Invitation",
+    "MarketplaceProfile",
+    "ProfessionalProfile",
+    "AdvisorProfile",
+    "FounderMarketplaceProfile",
+    "ProfileDocument",
 ]

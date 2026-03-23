@@ -171,3 +171,50 @@ class InvitationStatus(str, enum.Enum):
     ACCEPTED = "accepted"
     DECLINED = "declined"
     EXPIRED = "expired"
+
+
+# ── Marketplace enums ──────────────────────────────────────────────
+
+
+class MarketplaceRole(str, enum.Enum):
+    FOUNDER = "founder"
+    PROFESSIONAL = "professional"
+    ADVISOR = "advisor"
+
+
+class ProfileType(str, enum.Enum):
+    FOUNDER = "founder"
+    PROFESSIONAL = "professional"
+    ADVISOR = "advisor"
+
+
+class AvailabilityStatus(str, enum.Enum):
+    AVAILABLE = "available"
+    BUSY = "busy"
+    NOT_AVAILABLE = "not_available"
+    OPEN_TO_OFFERS = "open_to_offers"
+
+
+class MarketplaceDocumentType(str, enum.Enum):
+    RESUME = "resume"
+    PORTFOLIO = "portfolio"
+    CASE_STUDY = "case_study"
+    CERTIFICATION = "certification"
+    PITCH_DECK = "pitch_deck"
+    OTHER = "other"
+
+
+class CommitmentLevel(str, enum.Enum):
+    FULL_TIME = "full_time"
+    PART_TIME = "part_time"
+    FLEXIBLE = "flexible"
+    ADVISORY = "advisory"
+
+
+class FeeStructure(str, enum.Enum):
+    HOURLY = "hourly"
+    FIXED = "fixed"
+    EQUITY = "equity"
+    RETAINER = "retainer"
+    SUCCESS_FEE = "success_fee"
+    PRO_BONO = "pro_bono"

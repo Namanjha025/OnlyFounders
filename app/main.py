@@ -12,6 +12,7 @@ from app.routers import (
     funding_rounds,
     invitations,
     manager,
+    marketplace,
     member_documents,
     onboarding,
     product,
@@ -55,6 +56,7 @@ app.include_router(agents.registry_router)
 app.include_router(agents.team_router)
 app.include_router(agents.chat_router)
 app.include_router(manager.router)
+app.include_router(marketplace.router)
 
 
 @app.get("/health")

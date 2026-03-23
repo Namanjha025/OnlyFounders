@@ -9,28 +9,30 @@ import {
   Zap,
   Sparkles,
   LogOut,
+  User,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuth } from '@/lib/auth'
 
-/** Static footer identity until auth is wired to OnlyFounders API */
-const SIDEBAR_USER_NAME = 'Naman Jha'
-const SIDEBAR_USER_ROLE = 'Founder'
 
 const navItems = [
   { label: 'Overview', icon: LayoutDashboard, path: '/' },
   { label: 'Manager', icon: Sparkles, path: '/manager' },
   { label: 'Services', icon: Layers, path: '/services' },
   { label: 'Marketplace', icon: Store, path: '/marketplace' },
+  { label: 'My Profile', icon: User, path: '/marketplace/me', indent: true },
   { label: 'Calendar', icon: CalendarDays, path: '/calendar' },
 ]
 
 export function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { logout } = useAuth()
+  const { logout, user, profile } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
+
+  const userName = user ? `${user.first_name} ${user.last_name}` : 'User'
+  const userRole = profile?.profile_type || user?.marketplace_role || 'Member'
 
   const handleLogout = () => {
     logout()
@@ -58,27 +60,32 @@ export function Sidebar() {
         )}
       </div>
 
-      <nav className="flex-1 py-4 px-3 space-y-1">
+      <nav className="flex-1 py-4 px-3 space-y-0.5">
         {navItems.map((item) => {
           const isActive = item.path === '/'
             ? location.pathname === '/'
+            : item.path === '/marketplace'
+            ? location.pathname === '/marketplace'
             : location.pathname.startsWith(item.path)
+
+          const isIndented = 'indent' in item && item.indent
 
           return (
             <Link
               key={item.path}
               to={item.path}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-all duration-150 group relative',
+                'flex items-center gap-3 rounded-lg text-[15px] font-medium transition-all duration-150 group relative',
+                isIndented ? 'px-3 py-1.5 pl-9 text-[13px]' : 'px-3 py-2.5',
                 isActive
                   ? 'bg-white/[0.08] text-white'
                   : 'text-sidebar-foreground hover:bg-white/[0.04] hover:text-foreground'
               )}
             >
-              {isActive && (
+              {isActive && !isIndented && (
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-white rounded-r-full" />
               )}
-              <item.icon className={cn('w-[18px] h-[18px] shrink-0', isActive ? 'text-white' : 'text-muted-foreground group-hover:text-foreground')} />
+              <item.icon className={cn(isIndented ? 'w-[14px] h-[14px]' : 'w-[18px] h-[18px]', 'shrink-0', isActive ? 'text-white' : 'text-muted-foreground group-hover:text-foreground')} />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           )
@@ -89,11 +96,11 @@ export function Sidebar() {
         {!collapsed && (
           <div className="flex items-center gap-3 px-3 py-2 mb-2">
             <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold text-white">
-              {getInitials(SIDEBAR_USER_NAME)}
+              {getInitials(userName)}
             </div>
             <div className="flex-1 flex flex-col min-w-0">
-              <span className="text-sm font-medium text-foreground truncate">{SIDEBAR_USER_NAME}</span>
-              <span className="text-xs text-muted-foreground capitalize">{SIDEBAR_USER_ROLE}</span>
+              <span className="text-sm font-medium text-foreground truncate">{userName}</span>
+              <span className="text-xs text-muted-foreground capitalize">{userRole}</span>
             </div>
             <button
               onClick={handleLogout}

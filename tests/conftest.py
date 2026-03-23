@@ -28,7 +28,7 @@ from app.models import Base
 # Database setup
 # ---------------------------------------------------------------------------
 TEST_DB_NAME = "onlyfounders_test"
-TEST_DATABASE_URL = f"postgresql+asyncpg://namanjha@localhost:5432/{TEST_DB_NAME}"
+TEST_DATABASE_URL = f"postgresql+asyncpg://sidda:postgres@localhost:5432/{TEST_DB_NAME}"
 
 # IMPORTANT: Use NullPool to avoid connection sharing issues in tests.
 # NullPool creates a new connection for each session instead of reusing
@@ -53,7 +53,11 @@ def event_loop():
 # Schema setup via Alembic (uses sync psycopg2 — avoids asyncpg enum issues)
 # ---------------------------------------------------------------------------
 def _psql(sql: str) -> None:
-    subprocess.run(["psql", "-d", TEST_DB_NAME, "-c", sql], capture_output=True)
+    subprocess.run(
+        ["psql", "-U", "sidda", "-d", TEST_DB_NAME, "-c", sql],
+        capture_output=True,
+        env={**os.environ, "PGPASSWORD": "postgres"},
+    )
 
 
 def _clean_db() -> None:
@@ -73,7 +77,7 @@ def _clean_db() -> None:
 
 def _alembic_upgrade() -> None:
     env = os.environ.copy()
-    env["DATABASE_URL"] = f"postgresql+asyncpg://namanjha@localhost:5432/{TEST_DB_NAME}"
+    env["DATABASE_URL"] = f"postgresql+asyncpg://sidda:postgres@localhost:5432/{TEST_DB_NAME}"
     result = subprocess.run(
         [sys.executable, "-m", "alembic", "upgrade", "head"],
         capture_output=True,
