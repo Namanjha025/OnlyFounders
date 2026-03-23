@@ -36,7 +36,7 @@ export default function App() {
               <Route path="/notifications" element={<InboxPage />} />
               <Route path="/team" element={<Team />} />
               <Route path="/cases" element={<Cases />} />
-              <Route path="/cases/:workspaceId" element={<Workspace />} />
+              <Route path="/cases/:workspaceId/*" element={<Workspace />} />
               <Route path="/agents" element={<Agents />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/me" element={<MarketplaceProfilePage />} />

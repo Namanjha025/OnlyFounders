@@ -156,7 +156,7 @@ export function Sidebar() {
 
         {(collapsed || casesOpen) && wsList.map((ws) => {
           const WsIcon = resolveIcon(ws.icon)
-          const wsActive = location.pathname === `/cases/${ws.id}`
+          const wsActive = location.pathname.startsWith(`/cases/${ws.id}`)
           const dotColor = STATUS_DOT[ws.case_status] || STATUS_DOT.open
           return (
             <Link
