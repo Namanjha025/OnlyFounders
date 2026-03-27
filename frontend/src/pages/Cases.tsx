@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  Plus, Loader2, CheckCircle2, Clock, Circle, ChevronRight, X,
+  Plus, Loader2, CheckCircle2, Clock, Circle, ChevronRight, X, Search,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { resolveIcon } from '@/lib/icons'
 import {
   workspaces as wsApi,
   team as teamApi,
+  agents as agentsApi,
   type WorkspaceSummary,
   type CaseStatus,
   type TeamAgentOut,
+  type AgentOut,
 } from '@/lib/api'
 
 const STATUS_CONFIG: Record<CaseStatus, { label: string; color: string; bg: string; border: string; icon: typeof Circle }> = {
@@ -26,13 +28,14 @@ export function Cases() {
   const [searchParams] = useSearchParams()
   const [cases, setCases] = useState<WorkspaceSummary[]>([])
   const [teamList, setTeamList] = useState<TeamAgentOut[]>([])
+  const [catalog, setCatalog] = useState<AgentOut[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<CaseStatus | 'all'>('all')
   const [showCreate, setShowCreate] = useState(searchParams.get('new') === '1')
 
   useEffect(() => {
-    Promise.all([wsApi.list(), teamApi.list()])
-      .then(([c, t]) => { setCases(c); setTeamList(t) })
+    Promise.all([wsApi.list(), teamApi.list(), agentsApi.list()])
+      .then(([c, t, a]) => { setCases(c); setTeamList(t); setCatalog(a) })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
@@ -165,9 +168,11 @@ export function Cases() {
 
       {showCreate && (
         <NewCaseModal
+          catalog={catalog}
           teamAgents={teamList}
           onClose={() => setShowCreate(false)}
           onCreated={handleCreated}
+          onTeamUpdated={setTeamList}
         />
       )}
     </div>
@@ -175,19 +180,32 @@ export function Cases() {
 }
 
 function NewCaseModal({
+  catalog,
   teamAgents,
   onClose,
   onCreated,
+  onTeamUpdated,
 }: {
+  catalog: AgentOut[]
   teamAgents: TeamAgentOut[]
   onClose: () => void
   onCreated: (ws: WorkspaceSummary) => void
+  onTeamUpdated: (team: TeamAgentOut[]) => void
 }) {
   const [name, setName] = useState('')
   const [goal, setGoal] = useState('')
   const [icon, setIcon] = useState('Briefcase')
   const [selectedAgents, setSelectedAgents] = useState<Set<string>>(new Set())
   const [creating, setCreating] = useState(false)
+  const [search, setSearch] = useState('')
+
+  const hiredIds = new Set(teamAgents.map((ta) => ta.agent_id))
+  const query = search.toLowerCase().trim()
+  const filtered = query
+    ? catalog.filter((a) => a.name.toLowerCase().includes(query) || (a.category || '').toLowerCase().includes(query))
+    : catalog
+  const yourAgents = filtered.filter((a) => hiredIds.has(a.id))
+  const otherAgents = filtered.filter((a) => !hiredIds.has(a.id))
 
   const toggleAgent = (agentId: string) => {
     setSelectedAgents((prev) => {
@@ -210,8 +228,19 @@ function NewCaseModal({
         icon,
       })
 
+      const newTeamMembers: TeamAgentOut[] = []
       for (const agentId of selectedAgents) {
         await wsApi.addAgent(ws.id, agentId)
+        if (!hiredIds.has(agentId)) {
+          try {
+            const hired = await teamApi.hire({ agent_id: agentId })
+            newTeamMembers.push(hired)
+          } catch { /* already hired or error — skip */ }
+        }
+      }
+
+      if (newTeamMembers.length > 0) {
+        onTeamUpdated([...teamAgents, ...newTeamMembers])
       }
 
       const summary: WorkspaceSummary = {
@@ -231,6 +260,35 @@ function NewCaseModal({
       onCreated(summary)
     } catch {}
     setCreating(false)
+  }
+
+  const renderAgentButton = (agent: AgentOut) => {
+    const AgentIcon = resolveIcon(agent.icon)
+    const selected = selectedAgents.has(agent.id)
+    return (
+      <button
+        key={agent.id}
+        onClick={() => toggleAgent(agent.id)}
+        className={cn(
+          'flex items-center gap-2.5 px-3 py-2.5 rounded-lg border transition-colors text-left',
+          selected
+            ? 'bg-white/[0.08] border-white/[0.15] text-white'
+            : 'bg-white/[0.02] border-white/[0.06] text-zinc-400 hover:bg-white/[0.04]'
+        )}
+      >
+        <div
+          className="w-7 h-7 rounded-md flex items-center justify-center shrink-0"
+          style={{ backgroundColor: agent.color ? `${agent.color}15` : 'rgba(255,255,255,0.06)' }}
+        >
+          <AgentIcon className="w-3.5 h-3.5" style={{ color: agent.color || '#999' }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-medium truncate">{agent.name}</p>
+          <p className="text-[11px] text-zinc-600 truncate">{agent.category || 'General'}</p>
+        </div>
+        {selected && <CheckCircle2 className="w-4 h-4 text-white shrink-0" />}
+      </button>
+    )
   }
 
   return (
@@ -295,41 +353,43 @@ function NewCaseModal({
             </div>
           </div>
 
-          {/* Assign agents */}
-          {teamAgents.length > 0 && (
+          {/* Assign agents from catalog */}
+          {catalog.length > 0 && (
             <div className="mb-6">
               <label className="text-[12px] uppercase tracking-wider text-zinc-500 font-medium mb-2 block">
                 Assign Agents ({selectedAgents.size} selected)
               </label>
-              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
-                {teamAgents.map((ta) => {
-                  const AgentIcon = resolveIcon(ta.agent_icon)
-                  const selected = selectedAgents.has(ta.agent_id)
-                  return (
-                    <button
-                      key={ta.id}
-                      onClick={() => toggleAgent(ta.agent_id)}
-                      className={cn(
-                        'flex items-center gap-2.5 px-3 py-2.5 rounded-lg border transition-colors text-left',
-                        selected
-                          ? 'bg-white/[0.08] border-white/[0.15] text-white'
-                          : 'bg-white/[0.02] border-white/[0.06] text-zinc-400 hover:bg-white/[0.04]'
-                      )}
-                    >
-                      <div
-                        className="w-7 h-7 rounded-md flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: ta.agent_color ? `${ta.agent_color}15` : 'rgba(255,255,255,0.06)' }}
-                      >
-                        <AgentIcon className="w-3.5 h-3.5" style={{ color: ta.agent_color || '#999' }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-medium truncate">{ta.agent_name}</p>
-                        <p className="text-[11px] text-zinc-600 truncate">{ta.role}</p>
-                      </div>
-                      {selected && <CheckCircle2 className="w-4 h-4 text-white shrink-0" />}
-                    </button>
-                  )
-                })}
+
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600" />
+                <input
+                  className="w-full pl-8 pr-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-[13px] text-foreground placeholder-zinc-600 outline-none focus:border-white/[0.16] transition-colors"
+                  placeholder="Search agents..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+
+              <div className="max-h-56 overflow-y-auto space-y-3">
+                {yourAgents.length > 0 && (
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wider text-zinc-600 font-medium mb-1.5 px-0.5">Your agents</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {yourAgents.map(renderAgentButton)}
+                    </div>
+                  </div>
+                )}
+                {otherAgents.length > 0 && (
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wider text-zinc-600 font-medium mb-1.5 px-0.5">All agents</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {otherAgents.map(renderAgentButton)}
+                    </div>
+                  </div>
+                )}
+                {filtered.length === 0 && (
+                  <p className="text-[13px] text-zinc-600 text-center py-4">No agents match your search.</p>
+                )}
               </div>
             </div>
           )}

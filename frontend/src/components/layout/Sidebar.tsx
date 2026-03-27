@@ -108,13 +108,14 @@ export function Sidebar() {
             {!collapsed && teamList.slice(0, 4).map((ta) => {
               const AgentIcon = resolveIcon(ta.agent_icon)
               return (
-                <div
+                <Link
                   key={ta.id}
-                  className="flex items-center gap-2.5 px-3 py-1.5 pl-9 text-[13px] text-zinc-500"
+                  to={`/agents/${ta.agent_id}`}
+                  className="flex items-center gap-2.5 px-3 py-1.5 pl-9 text-[13px] text-zinc-500 hover:text-zinc-300 transition-colors rounded-lg hover:bg-white/[0.04]"
                 >
                   <AgentIcon className="w-3.5 h-3.5 shrink-0" style={{ color: ta.agent_color || '#666' }} />
                   <span className="truncate">{ta.agent_name}</span>
-                </div>
+                </Link>
               )
             })}
             {!collapsed && teamList.length > 4 && (

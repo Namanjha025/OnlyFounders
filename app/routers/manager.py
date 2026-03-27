@@ -81,7 +81,6 @@ async def invoke_manager(
     agent = await _get_manager_agent(db)
     await _require_manager_on_team(startup, agent, db)
 
-    # Save user message
     user_msg = Message(
         startup_id=startup.id,
         agent_id=agent.id,
@@ -90,13 +89,11 @@ async def invoke_manager(
     )
     db.add(user_msg)
 
-    # TODO: Load Manager agent config, build LangGraph, invoke, get response
-    # The Manager will orchestrate other agents on the team
     assistant_msg = Message(
         startup_id=startup.id,
         agent_id=agent.id,
         role=MessageRole.ASSISTANT,
-        content="[Manager response placeholder — LangGraph integration pending]",
+        content="[Manager response placeholder — agent integration pending]",
     )
     db.add(assistant_msg)
 

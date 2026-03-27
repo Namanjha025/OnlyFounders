@@ -42,7 +42,7 @@ export function Manager() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, isTyping])
 
-  const handleSend = (text?: string) => {
+  const handleSend = async (text?: string) => {
     const msg = text || input.trim()
     if (!msg) return
 
@@ -51,11 +51,12 @@ export function Manager() {
     setInput('')
     setIsTyping(true)
 
-    setTimeout(() => {
-      const reply = getReply(msg)
-      setMessages((prev) => [...prev, { id: Date.now() + 1, role: 'assistant', content: reply, time: now() }])
-      setIsTyping(false)
-    }, 1200 + Math.random() * 800)
+    const reply = getReply(msg)
+    setMessages((prev) => [
+      ...prev,
+      { id: Date.now() + 1, role: 'assistant', content: reply, time: now() },
+    ])
+    setIsTyping(false)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -202,7 +203,7 @@ function getReply(msg: string): string {
     return `Here's a sensible **priority stack** for your startup this week:\n\n**1. Close the loop on metrics** — Update traction numbers in the workspace so the Manager (and future investors) see a current picture.\n\n**2. Unblock fundraising prep** — Finish the financial model upload and reconcile runway assumptions with your cap table.\n\n**3. Ship one visible product increment** — Protect a deep-work block for the highest-impact task on your board.\n\n**4. Team & ops** — Confirm who's owning investor outreach and legal follow-ups so nothing slips.\n\nWant this tailored once your real task due dates are synced from the API?`
   }
   if (lower.includes('summar') || lower.includes('workspace') || lower.includes('status') || lower.includes('milestone')) {
-    return `**Workspace snapshot** (illustrative until live data loads):\n\n**Startup** — Profile active; stage and industry set in OnlyFounders.\n\n**Tasks** — 8 open: 3 due this week (traction update, deck appendix, investor CRM cleanup).\n\n**Runway** — Financial details in the app will drive this; plug in burn and cash to see weeks-of-runway here.\n\n**Milestones** — Demo dry-run Friday; founder sync Thursday; target: seed materials “investor-ready” by month-end.\n\nConnect the backend to replace this with your real tasks, documents, funding rounds, and calendar events.`
+    return `**Workspace snapshot** (illustrative until live data loads):\n\n**Startup** — Profile active; stage and industry set in OnlyFounders.\n\n**Tasks** — 8 open: 3 due this week (traction update, deck appendix, investor CRM cleanup).\n\n**Runway** — Financial details in the app will drive this; plug in burn and cash to see weeks-of-runway here.\n\n**Milestones** — Demo dry-run Friday; founder sync Thursday; target: seed materials "investor-ready" by month-end.\n\nConnect the backend to replace this with your real tasks, documents, funding rounds, and calendar events.`
   }
   if (lower.includes('risk') || lower.includes('blocker') || lower.includes('roadmap') || lower.includes('watch')) {
     return `**Risks & blockers** to keep on your radar:\n\n**Runway / fundraising** — If the model isn't updated, you may misestimate months of cash left ahead of investor conversations.\n\n**Single-threaded work** — Too many parallel initiatives slows shipping; watch for tasks stuck in "in progress" with no owner.\n\n**Document drift** — Pitch deck, data room, and cap table should version together before you send materials out.\n\n**Compliance & cap table** — ESOP promises or SAFEs that aren't reflected in the workspace create surprises later.\n\nTell me your stage (pre-seed / seed / Series A) and I can stress-test a tighter list.`

@@ -3,19 +3,22 @@ import { useParams, Routes, Route, Navigate, useNavigate, useLocation } from 're
 import {
   Send, CheckCircle2, Circle, ListChecks, Bell,
   Loader2, ChevronDown, Users, Plus, MoreHorizontal, ArrowLeft,
-  ChevronRight, X, Home, Clock,
+  ChevronRight, X, Home, Clock, Search,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { resolveIcon } from '@/lib/icons'
 import {
   workspaces as wsApi,
   notifications as notifApi,
+  agents as agentsApi,
+  team as teamApi,
   type WorkspaceOut,
   type WorkspaceMessageOut,
   type WorkspaceTaskOut,
   type WorkspaceAgentOut,
   type NotificationOut,
   type CaseStatus,
+  type AgentOut,
 } from '@/lib/api'
 
 export function Workspace() {
@@ -229,11 +232,12 @@ function ChatView({
 
   const handleSend = async () => {
     if (!input.trim()) return
+    const text = input.trim()
+    setInput('')
     setSending(true)
     try {
-      const msg = await wsApi.sendMessage(workspaceId, input.trim())
+      const msg = await wsApi.sendMessage(workspaceId, text)
       setMessages((prev) => [...prev, msg])
-      setInput('')
     } catch {}
     setSending(false)
   }
@@ -387,6 +391,36 @@ function AgentsView({
   workspaceId: string
   setWs: React.Dispatch<React.SetStateAction<WorkspaceOut | null>>
 }) {
+  const [showAdd, setShowAdd] = useState(false)
+  const [catalog, setCatalog] = useState<AgentOut[]>([])
+  const [catalogLoading, setCatalogLoading] = useState(false)
+  const [search, setSearch] = useState('')
+  const [adding, setAdding] = useState<Set<string>>(new Set())
+
+  const assignedIds = new Set(ws.agents.map((a) => a.agent_id))
+
+  const loadCatalog = async () => {
+    if (catalog.length > 0) { setShowAdd(true); return }
+    setCatalogLoading(true)
+    try {
+      const agents = await agentsApi.list()
+      setCatalog(agents)
+    } catch {}
+    setCatalogLoading(false)
+    setShowAdd(true)
+  }
+
+  const handleAdd = async (agent: AgentOut) => {
+    if (adding.has(agent.id)) return
+    setAdding((p) => new Set(p).add(agent.id))
+    try {
+      const wa = await wsApi.addAgent(workspaceId, agent.id)
+      setWs((prev) => prev ? { ...prev, agents: [...prev.agents, wa] } : prev)
+      try { await teamApi.hire({ agent_id: agent.id }) } catch { /* already on team */ }
+    } catch {}
+    setAdding((p) => { const n = new Set(p); n.delete(agent.id); return n })
+  }
+
   const handleRemove = async (agentId: string) => {
     try {
       await wsApi.removeAgent(workspaceId, agentId)
@@ -394,10 +428,85 @@ function AgentsView({
     } catch {}
   }
 
+  const query = search.toLowerCase().trim()
+  const available = catalog.filter((a) =>
+    !assignedIds.has(a.id) &&
+    (!query || a.name.toLowerCase().includes(query) || (a.category || '').toLowerCase().includes(query))
+  )
+
   return (
     <div className="flex-1 overflow-y-auto p-8 max-w-2xl">
-      <h2 className="text-[18px] font-semibold text-foreground mb-6">Agents ({ws.agents.length})</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-[18px] font-semibold text-foreground">Agents ({ws.agents.length})</h2>
+        <button
+          onClick={loadCatalog}
+          disabled={catalogLoading}
+          className="flex items-center gap-1.5 text-[13px] font-medium text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
+        >
+          {catalogLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+          Add Agent
+        </button>
+      </div>
 
+      {/* Add-agent browser */}
+      {showAdd && (
+        <div className="mb-6 rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[13px] font-medium text-zinc-300">Browse agents to add</p>
+            <button onClick={() => { setShowAdd(false); setSearch('') }} className="p-1 text-zinc-600 hover:text-white rounded transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600" />
+            <input
+              className="w-full pl-8 pr-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-[13px] text-foreground placeholder-zinc-600 outline-none focus:border-white/[0.16] transition-colors"
+              placeholder="Search agents..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              autoFocus
+            />
+          </div>
+          {available.length === 0 ? (
+            <p className="text-[13px] text-zinc-600 text-center py-4">
+              {query ? 'No matching agents found.' : 'All agents are already assigned.'}
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+              {available.map((agent) => {
+                const AgentIcon = resolveIcon(agent.icon)
+                const isAdding = adding.has(agent.id)
+                return (
+                  <button
+                    key={agent.id}
+                    onClick={() => handleAdd(agent)}
+                    disabled={isAdding}
+                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02] text-zinc-400 hover:bg-white/[0.06] hover:text-white transition-colors text-left disabled:opacity-50"
+                  >
+                    <div
+                      className="w-7 h-7 rounded-md flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: agent.color ? `${agent.color}15` : 'rgba(255,255,255,0.06)' }}
+                    >
+                      <AgentIcon className="w-3.5 h-3.5" style={{ color: agent.color || '#999' }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-medium truncate">{agent.name}</p>
+                      <p className="text-[11px] text-zinc-600 truncate">{agent.category || 'General'}</p>
+                    </div>
+                    {isAdding ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                    ) : (
+                      <Plus className="w-3.5 h-3.5 shrink-0 text-zinc-600" />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Assigned agents */}
       {ws.agents.length === 0 ? (
         <p className="text-[15px] text-zinc-600 italic">No agents assigned to this case.</p>
       ) : (
