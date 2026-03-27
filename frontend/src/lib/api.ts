@@ -253,6 +253,9 @@ export const workspaces = {
   sendMessage: (id: string, content: string) =>
     request<WorkspaceMessageOut>(`/workspaces/${id}/messages`, { method: 'POST', body: JSON.stringify({ content }) }),
 
+  chat: (id: string, content: string) =>
+    request<WorkspaceMessageOut[]>(`/workspaces/${id}/chat`, { method: 'POST', body: JSON.stringify({ content }) }),
+
   listTasks: (id: string) =>
     request<WorkspaceTaskOut[]>(`/workspaces/${id}/tasks`),
 
@@ -335,12 +338,15 @@ export interface AgentOut {
   slug: string
   description: string | null
   agent_type: string
+  endpoint_url: string | null
+  agent_card: Record<string, unknown> | null
   category: string | null
   icon: string | null
   color: string | null
   capabilities: string[] | null
   instructions: string[] | null
   connections: { name: string; icon?: string }[] | null
+  skills: string[] | null
   is_active: boolean
   created_at: string
   updated_at: string
@@ -352,6 +358,12 @@ export const agents = {
 
   get: (id: string) =>
     request<AgentOut>(`/agents/${id}`),
+
+  register: (agentUrl: string) =>
+    request<AgentOut>('/agents/register', {
+      method: 'POST',
+      body: JSON.stringify({ agent_url: agentUrl }),
+    }),
 }
 
 // ── Team ────────────────────────────────────────────────────────

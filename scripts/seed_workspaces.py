@@ -114,6 +114,13 @@ TEAM_DEFS = [
     {"slug": "grant-finder", "role": "Grant Researcher", "jd": "Finds and helps apply for government grants, startup schemes, and cloud credits."},
 ]
 
+# Standalone A2A agents to register (if running locally)
+A2A_AGENTS = [
+    {"url": "http://localhost:8001", "label": "Legal Expert"},
+    {"url": "http://localhost:8002", "label": "Product Expert"},
+    {"url": "http://localhost:8003", "label": "Startup Intern"},
+]
+
 
 def build_messages(ws_name, agent_map):
     """Return list of (agent_slug_or_none, role, content) tuples."""
@@ -218,6 +225,22 @@ async def seed():
                         break
             else:
                 print(f"  ERROR creating {slug}: {res.text}")
+
+        # Register standalone A2A agents (if they're running)
+        print("\nRegistering A2A agents (if running)...")
+        for a2a in A2A_AGENTS:
+            try:
+                res = await client.post("/agents/register", json={"agent_url": a2a["url"]}, headers=headers)
+                if res.status_code == 201:
+                    registered = res.json()
+                    agent_id_map[registered["slug"]] = registered["id"]
+                    print(f"  Registered: {a2a['label']} → slug={registered['slug']}")
+                elif res.status_code == 502:
+                    print(f"  SKIP: {a2a['label']} (not running at {a2a['url']})")
+                else:
+                    print(f"  SKIP: {a2a['label']} ({res.status_code}: {res.text[:80]})")
+            except Exception:
+                print(f"  SKIP: {a2a['label']} (connection failed)")
 
         # Hire agents to team
         print("\nHiring agents to team...")

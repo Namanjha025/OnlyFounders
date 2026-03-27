@@ -46,8 +46,11 @@ export function Agents() {
   const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
-    Promise.all([agentsApi.list(), teamApi.list()])
-      .then(([a, t]) => { setAgentList(a); setTeamList(t) })
+    agentsApi.list()
+      .then((a) => setAgentList(a))
+      .catch(() => {})
+    teamApi.list()
+      .then((t) => setTeamList(t))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])

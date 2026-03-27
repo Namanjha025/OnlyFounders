@@ -236,9 +236,14 @@ function ChatView({
     setInput('')
     setSending(true)
     try {
-      const msg = await wsApi.sendMessage(workspaceId, text)
-      setMessages((prev) => [...prev, msg])
-    } catch {}
+      const msgs = await wsApi.chat(workspaceId, text)
+      setMessages((prev) => [...prev, ...msgs])
+    } catch {
+      try {
+        const msg = await wsApi.sendMessage(workspaceId, text)
+        setMessages((prev) => [...prev, msg])
+      } catch {}
+    }
     setSending(false)
   }
 

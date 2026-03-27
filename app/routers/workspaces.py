@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import List, Optional
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -307,6 +308,84 @@ async def send_message(
         .options(selectinload(WorkspaceMessage.agent))
     )
     return _message_out(result.scalar_one())
+
+
+# ── workspace chat (proxy to assigned agent) ─────────────────────
+
+
+@router.post("/{workspace_id}/chat", response_model=List[WorkspaceMessageOut], status_code=status.HTTP_201_CREATED)
+async def chat(
+    workspace_id: uuid.UUID,
+    data: WorkspaceMessageCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Send a message and proxy to the first assigned agent with an endpoint_url.
+
+    Returns [user_msg] or [user_msg, agent_msg] depending on whether an agent
+    is available and responds.
+    """
+    ws = await _get_workspace(workspace_id, current_user, db)
+
+    user_msg = WorkspaceMessage(
+        workspace_id=ws.id, user_id=current_user.id, role="user", content=data.content,
+    )
+    db.add(user_msg)
+    await db.flush()
+
+    result = await db.execute(
+        select(WorkspaceMessage).where(WorkspaceMessage.id == user_msg.id)
+        .options(selectinload(WorkspaceMessage.agent))
+    )
+    out_messages = [_message_out(result.scalar_one())]
+
+    wa_result = await db.execute(
+        select(WorkspaceAgent).where(WorkspaceAgent.workspace_id == ws.id)
+        .options(selectinload(WorkspaceAgent.agent)).limit(1)
+    )
+    wa = wa_result.scalar_one_or_none()
+
+    if wa and wa.agent and wa.agent.endpoint_url:
+        agent = wa.agent
+        chat_url = agent.endpoint_url.rstrip("/") + "/chat"
+
+        msg_result = await db.execute(
+            select(WorkspaceMessage).where(WorkspaceMessage.workspace_id == ws.id)
+            .order_by(WorkspaceMessage.created_at.asc()).limit(50)
+        )
+        history = []
+        for m in msg_result.scalars().all():
+            role_str = m.role.value if hasattr(m.role, "value") else str(m.role)
+            history.append({
+                "role": "assistant" if role_str in ("assistant", "agent") else "user",
+                "content": m.content,
+            })
+
+        reply_text = "[Agent did not respond]"
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+                resp = await client.post(chat_url, json={
+                    "message": data.content, "history": history,
+                })
+                resp.raise_for_status()
+                reply_text = resp.json().get("message", reply_text)
+        except Exception as e:
+            reply_text = f"[Agent communication error: {e}]"
+
+        agent_msg = WorkspaceMessage(
+            workspace_id=ws.id, agent_id=agent.id, role="assistant", content=reply_text,
+        )
+        db.add(agent_msg)
+        await db.flush()
+
+        result = await db.execute(
+            select(WorkspaceMessage).where(WorkspaceMessage.id == agent_msg.id)
+            .options(selectinload(WorkspaceMessage.agent))
+        )
+        out_messages.append(_message_out(result.scalar_one()))
+
+    await db.commit()
+    return out_messages
 
 
 # ── workspace tasks ───────────────────────────────────────────────

@@ -26,6 +26,11 @@ class Agent(Base, UUIDMixin, TimestampMixin):
     tools_config: Mapped[Optional[dict]] = mapped_column(JSONB)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
 
+    # A2A fields
+    endpoint_url: Mapped[Optional[str]] = mapped_column(String(500))
+    agent_card: Mapped[Optional[dict]] = mapped_column(JSONB)
+
+    # Display / profile fields
     category: Mapped[Optional[str]] = mapped_column(String(100))
     icon: Mapped[Optional[str]] = mapped_column(String(50))
     color: Mapped[Optional[str]] = mapped_column(String(20))

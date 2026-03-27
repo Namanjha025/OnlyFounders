@@ -30,7 +30,7 @@ class TeamAgentOut(BaseModel):
     agent_category: Optional[str] = None
     agent_icon: Optional[str] = None
     agent_color: Optional[str] = None
-    agent_capabilities: Optional[List[str]] = None
+    agent_capabilities: Optional[Any] = None
     created_at: datetime.datetime
     updated_at: datetime.datetime
 

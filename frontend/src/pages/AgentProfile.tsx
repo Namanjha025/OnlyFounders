@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
-import { MapPin, Heart, Briefcase, Users, CheckCircle2 } from 'lucide-react'
+import { MapPin, Heart, Briefcase, Users, CheckCircle2, ArrowUp, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { agents as agentsApi, team as teamApi, type AgentOut, type TeamAgentOut } from '@/lib/api'
 import { resolveIcon } from '@/lib/icons'
@@ -9,20 +9,55 @@ import {
   ProfileTopBar, ProfileSection, ProfileSidebarCard, QuickInfoRow, ScoreRing,
 } from '@/components/shared'
 
+interface ChatMsg { id: number; role: 'user' | 'assistant'; content: string }
+
 export function AgentProfile() {
   const { agentId } = useParams<{ agentId: string }>()
   const [agent, setAgent] = useState<AgentOut | null>(null)
   const [teamList, setTeamList] = useState<TeamAgentOut[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [chatOpen, setChatOpen] = useState(false)
+  const [chatMsgs, setChatMsgs] = useState<ChatMsg[]>([])
+  const [chatInput, setChatInput] = useState('')
+  const [chatSending, setChatSending] = useState(false)
+  const chatEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!agentId) return
-    Promise.all([agentsApi.get(agentId), teamApi.list()])
-      .then(([a, t]) => { setAgent(a); setTeamList(t) })
+    agentsApi.get(agentId)
+      .then((a) => setAgent(a))
       .catch((err) => setError(err instanceof Error ? err.message : 'Not found'))
+    teamApi.list()
+      .then((t) => setTeamList(t))
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [agentId])
+
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatMsgs])
+
+  const handleChatSend = async () => {
+    if (!chatInput.trim() || !agent?.endpoint_url || chatSending) return
+    const text = chatInput.trim()
+    setChatInput('')
+    setChatMsgs((prev) => [...prev, { id: Date.now(), role: 'user', content: text }])
+    setChatSending(true)
+    try {
+      const resp = await fetch(agent.endpoint_url + '/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text,
+          history: chatMsgs.map((m) => ({ role: m.role, content: m.content })),
+        }),
+      })
+      const data = await resp.json()
+      setChatMsgs((prev) => [...prev, { id: Date.now() + 1, role: 'assistant', content: data.message || '[No response]' }])
+    } catch {
+      setChatMsgs((prev) => [...prev, { id: Date.now() + 1, role: 'assistant', content: '[Failed to reach agent]' }])
+    }
+    setChatSending(false)
+  }
 
   const isHired = agent ? teamList.some((t) => t.agent_id === agent.id) : false
 
@@ -144,6 +179,60 @@ export function AgentProfile() {
                 </div>
               </ProfileSection>
             )}
+
+            {/* Chat section */}
+            {chatOpen && agent.endpoint_url && (
+              <ProfileSection title="Chat" icon={MessageSquare}>
+                <div className="flex flex-col h-[400px]">
+                  <div className="flex-1 overflow-y-auto space-y-3 mb-3 pr-1">
+                    {chatMsgs.length === 0 && (
+                      <p className="text-xs text-zinc-500 text-center py-8">Send a message to start chatting with {agent.name}</p>
+                    )}
+                    {chatMsgs.map((m) => (
+                      <div key={m.id} className={cn('flex', m.role === 'user' ? 'justify-end' : 'justify-start')}>
+                        <div className={cn(
+                          'max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed',
+                          m.role === 'user'
+                            ? 'bg-white/10 text-zinc-200'
+                            : 'bg-white/[0.04] border border-white/[0.06] text-zinc-300'
+                        )}>
+                          <p className="whitespace-pre-wrap">{m.content}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {chatSending && (
+                      <div className="flex justify-start">
+                        <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl px-4 py-3">
+                          <div className="flex gap-1">
+                            <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <div ref={chatEndRef} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleChatSend()}
+                      placeholder={`Message ${agent.name}...`}
+                      className="flex-1 bg-white/[0.06] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-zinc-200 placeholder:text-zinc-600 outline-none focus:border-white/20 transition"
+                    />
+                    <button
+                      onClick={handleChatSend}
+                      disabled={!chatInput.trim() || chatSending}
+                      className="shrink-0 w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 flex items-center justify-center transition"
+                    >
+                      <ArrowUp className="w-4 h-4 text-zinc-200" />
+                    </button>
+                  </div>
+                </div>
+              </ProfileSection>
+            )}
           </div>
 
           {/* ── Right Column ─────────────────────────────────────── */}
@@ -168,6 +257,26 @@ export function AgentProfile() {
                 <Users className="w-4 h-4" /> {isHired ? 'Already on Team' : 'Hire to Team'}
               </button>
             </ProfileSidebarCard>
+
+            {/* Chat button */}
+            {agent.endpoint_url && (
+              <ProfileSidebarCard title="Chat">
+                <p className="text-xs text-zinc-500 mb-3">
+                  Talk directly with this agent to learn more or start a task.
+                </p>
+                <button
+                  onClick={() => setChatOpen((v) => !v)}
+                  className={cn(
+                    'w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition',
+                    chatOpen
+                      ? 'bg-white/10 text-white'
+                      : 'border border-white/20 text-zinc-300 hover:bg-white/5 hover:border-white/30'
+                  )}
+                >
+                  <MessageSquare className="w-4 h-4" /> {chatOpen ? 'Close Chat' : 'Chat with Agent'}
+                </button>
+              </ProfileSidebarCard>
+            )}
 
             {/* Quick Info — same component as marketplace */}
             <ProfileSidebarCard title="Quick Info">
